@@ -34,13 +34,13 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar],
   template: `
     @if (inline()) {
-      <div class="ngx-dt-panel" role="group">
+      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()">
         <ng-container [ngTemplateOutlet]="panel" />
       </div>
-    } @else {
+    } @else if (origin(); as originEl) {
       <ng-template
         cdkConnectedOverlay
-        [cdkConnectedOverlayOrigin]="origin()!"
+        [cdkConnectedOverlayOrigin]="originEl"
         [cdkConnectedOverlayOpen]="isOpen()"
         [cdkConnectedOverlayPositions]="positions"
         [cdkConnectedOverlayHasBackdrop]="hasBackdrop()"
@@ -53,6 +53,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           class="ngx-dt-panel"
           role="dialog"
           aria-modal="true"
+          [attr.aria-label]="ariaLabel()"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
         >
@@ -89,6 +90,7 @@ export class NgxDtPicker<D = unknown> {
   readonly disabled = input(false);
   readonly hasBackdrop = input(this.options.hasBackdrop);
   readonly restoreFocus = input(this.options.restoreFocus);
+  readonly ariaLabel = input('Choose a date');
 
   /** Two-way selected value. `model()` provides the `valueChange` output. */
   readonly value = model<D | null>(null);
@@ -117,6 +119,9 @@ export class NgxDtPicker<D = unknown> {
     }
     if (origin) {
       this._origin.set(origin);
+    }
+    if (!this._origin()) {
+      return; // overlay requires an anchor element
     }
     this._open.set(true);
     this.openedChange.emit(true);

@@ -153,6 +153,17 @@ describe('NgxDtPicker — overlay', () => {
     expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDate);
   });
 
+  it('does not open an overlay without an origin', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    picker.open(); // no origin ever supplied
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(picker.isOpen()).toBe(false);
+    expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeNull();
+  });
+
   it('does not open when disabled', async () => {
     // `disabled` is bound true through the real signal input on the host
     // template (cleaner than monkey-patching the signal); open() must no-op.
@@ -205,6 +216,16 @@ describe('NgxDtPicker — overlay a11y', () => {
     const panel = overlayPanel()!;
     expect(panel.getAttribute('role')).toBe('dialog');
     expect(panel.getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('exposes an accessible name on the overlay dialog', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const panel = overlayPanel()!;
+    expect(panel.getAttribute('aria-label')).toBe('Choose a date');
   });
 });
 
