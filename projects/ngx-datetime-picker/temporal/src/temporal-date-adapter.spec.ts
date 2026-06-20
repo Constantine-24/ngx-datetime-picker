@@ -109,3 +109,44 @@ describe('TemporalDateAdapter — parse', () => {
     expect(a.isValid(a.parse('13/40/2026') as Temporal.PlainDate)).toBe(false);
   });
 });
+
+describe('TemporalDateAdapter — format / compare / validity', () => {
+  const d = Temporal.PlainDate.from('2026-06-20');
+
+  it('formats via Intl options', () => {
+    const out = makeAdapter('en-US').format(d, { year: 'numeric', month: 'short', day: 'numeric' });
+    expect(out).toBe('Jun 20, 2026');
+  });
+  it('throws when formatting an invalid date', () => {
+    const a = makeAdapter();
+    expect(() => a.format(a.invalid(), { year: 'numeric' })).toThrow();
+  });
+  it('round-trips parse↔format (en-US)', () => {
+    const a = makeAdapter('en-US');
+    const fmt = { year: 'numeric', month: '2-digit', day: '2-digit' } as const;
+    expect(a.parse(a.format(d, fmt))!.toString()).toBe('2026-06-20');
+  });
+  it('toIso8601', () => expect(makeAdapter().toIso8601(d)).toBe('2026-06-20'));
+  it('deserialize accepts ISO strings and PlainDate', () => {
+    const a = makeAdapter();
+    expect(a.deserialize('2026-06-20')!.toString()).toBe('2026-06-20');
+    expect(a.deserialize(d)).toBe(d);
+    expect(a.deserialize(null)).toBeNull();
+    expect(a.deserialize('')).toBeNull();
+  });
+  it('compareDate orders dates', () => {
+    const a = makeAdapter();
+    expect(a.compareDate(d, Temporal.PlainDate.from('2026-06-21'))).toBeLessThan(0);
+    expect(a.compareDate(d, d)).toBe(0);
+  });
+  it('isValid distinguishes valid from invalid()', () => {
+    const a = makeAdapter();
+    expect(a.isValid(d)).toBe(true);
+    expect(a.isValid(a.invalid())).toBe(false);
+  });
+  it('isDateInstance', () => {
+    const a = makeAdapter();
+    expect(a.isDateInstance(d)).toBe(true);
+    expect(a.isDateInstance('2026-06-20')).toBe(false);
+  });
+});

@@ -130,8 +130,36 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
       .filter((p) => p.type === 'year' || p.type === 'month' || p.type === 'day')
       .map((p) => p.type as 'year' | 'month' | 'day');
   }
-  format(date: Temporal.PlainDate): string {
-    return date.toString();
+  override format(
+    date: Temporal.PlainDate,
+    displayFormat: Intl.DateTimeFormatOptions,
+  ): string {
+    if (!this.isValid(date)) {
+      throw new Error('TemporalDateAdapter: Cannot format invalid date.');
+    }
+    return date.toLocaleString(this.locale, displayFormat);
+  }
+
+  override deserialize(value: unknown): Temporal.PlainDate | null {
+    if (value == null || value === '') return null;
+    if (value instanceof Temporal.PlainDate) return value;
+    if (value instanceof Temporal.PlainDateTime) return value.toPlainDate();
+    if (value instanceof Temporal.ZonedDateTime) return value.toPlainDate();
+    if (typeof value === 'string') {
+      try {
+        return Temporal.PlainDate.from(value, { overflow: 'reject' });
+      } catch {
+        return this.invalid();
+      }
+    }
+    return super.deserialize(value);
+  }
+
+  override compareDate(
+    first: Temporal.PlainDate,
+    second: Temporal.PlainDate,
+  ): number {
+    return Temporal.PlainDate.compare(first, second);
   }
   addCalendarYears(date: Temporal.PlainDate, years: number): Temporal.PlainDate {
     return date.add({ years });
