@@ -16,3 +16,4 @@ export type { NgxDtPickerRangeInput } from './lib/picker/ngx-dt-picker';
 // importing from `@angular/material/datepicker` directly.
 export { DateRange } from '@angular/material/datepicker';
 export { NgxDtTimeAdapter } from './lib/time/ngx-dt-time-adapter';
+export { NgxDtTimePanel } from './lib/time-panel/ngx-dt-time-panel';
