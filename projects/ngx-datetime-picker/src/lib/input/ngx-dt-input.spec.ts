@@ -127,6 +127,33 @@ describe('NgxDtInput — keyboard open', () => {
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);
     expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeTruthy();
   });
+
+  it('does not open on Alt+ArrowDown when disabled', async () => {
+    @Component({
+      imports: [NgxDtInput, NgxDtPicker, ReactiveFormsModule],
+      template: `
+        <input [ngxDtInput]="picker" [formControl]="ctrl" />
+        <ngx-dt-picker #picker />
+      `,
+    })
+    class DisabledInputHost {
+      readonly ctrl = new FormControl<Temporal.PlainDate | null>({ value: null, disabled: true });
+      readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+    }
+
+    const fixture = TestBed.createComponent(DisabledInputHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    inputEl(fixture).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picker().isOpen()).toBe(false);
+    expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeNull();
+  });
 });
 
 describe('NgxDtInput — validators', () => {
@@ -195,5 +222,48 @@ describe('NgxDtInput — validators', () => {
     type(inputEl(fixture), '2026-06-15');
     fixture.detectChanges();
     expect(fixture.componentInstance.ctrl.errors).toBeNull();
+  });
+
+  it('clears a prior parse error once valid text is typed', async () => {
+    const fixture = TestBed.createComponent(ValidatedHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    type(inputEl(fixture), 'garbage');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.ctrl.hasError('ngxDtParse')).toBe(true);
+
+    type(inputEl(fixture), '2026-06-15');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.ctrl.errors).toBeNull();
+  });
+
+  it('re-validates when the picker constraints change', async () => {
+    @Component({
+      imports: [NgxDtInput, NgxDtPicker, ReactiveFormsModule],
+      template: `
+        <input [ngxDtInput]="picker" [formControl]="ctrl" />
+        <ngx-dt-picker #picker [inline]="true" [min]="min()" />
+      `,
+    })
+    class ConstraintHost {
+      readonly ctrl = new FormControl<Temporal.PlainDate | null>(null);
+      readonly min = signal(Temporal.PlainDate.from('2026-06-10'));
+    }
+
+    const fixture = TestBed.createComponent(ConstraintHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    type(inputEl(fixture), '2026-06-15');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.ctrl.errors).toBeNull();
+
+    // Tighten min above the typed value — the directive's effect must re-validate
+    // even though the control value itself is unchanged.
+    fixture.componentInstance.min.set(Temporal.PlainDate.from('2026-06-16'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.ctrl.hasError('ngxDtMin')).toBe(true);
   });
 });
