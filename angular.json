@@ -93,7 +93,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "tsConfig": "projects/ngx-datetime-picker/tsconfig.spec.json"
+            "tsConfig": "projects/ngx-datetime-picker/tsconfig.spec.json",
+            "buildTarget": "ngx-datetime-picker:build"
           }
         }
       }
