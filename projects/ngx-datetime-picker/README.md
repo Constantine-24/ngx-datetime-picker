@@ -1,64 +1,81 @@
-# NgxDatetimePicker
+# ngx-datetime-picker
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.0.
+A configurable Angular date & time picker library built on `@angular/cdk`, reusing
+`@angular/material` primitives (`MatCalendar`, `DateAdapter`). Adapter-agnostic, with a
+TC39 **Temporal** adapter as the flagship default.
 
-## Code scaffolding
+> **Status:** Foundation only. This first release ships the workspace and a fully tested
+> `DateAdapter<Temporal.PlainDate>`. The picker components (date, date-range, datetime,
+> datetime-range, time) land in subsequent releases.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Entry points
 
-```bash
-ng generate component component-name
-```
+| Import | Contents |
+| --- | --- |
+| `ngx-datetime-picker` | Adapter-agnostic core (components — coming soon) |
+| `ngx-datetime-picker/temporal` | `TemporalDateAdapter`, `provideTemporalDateAdapter()`, `NGX_DT_TEMPORAL_DATE_FORMATS` |
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+The Temporal adapter lives in a secondary entry point so the `temporal-polyfill` runtime
+tree-shakes away for consumers who don't use it.
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the library, run:
-
-```bash
-ng build ngx-datetime-picker
-```
-
-This command will compile your project, and the build artifacts will be placed in the `dist/` directory.
-
-### Publishing the Library
-
-Once the project is built, you can publish your library by following these steps:
-
-1. Navigate to the `dist` directory:
-
-   ```bash
-   cd dist/ngx-datetime-picker
-   ```
-
-2. Run the `npm publish` command to publish your library to the npm registry:
-   ```bash
-   npm publish
-   ```
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Installation
 
 ```bash
-ng test
+npm install ngx-datetime-picker @angular/material @angular/cdk temporal-polyfill
 ```
 
-## Running end-to-end tests
+`temporal-polyfill` is an **optional** peer dependency — only required where native
+`Temporal` is unavailable (e.g. Safari, mid-2026).
 
-For end-to-end (e2e) testing, run:
+## Usage
+
+Provide the Temporal adapter app-wide; it satisfies Material's `DateAdapter` and
+`MAT_DATE_FORMATS`, so any Material datepicker primitive (e.g. `MatCalendar`) works with
+zone-naive `Temporal.PlainDate` values:
+
+```ts
+import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideTemporalDateAdapter(),
+    // ...
+  ],
+};
+```
+
+```ts
+import { MatCalendar } from '@angular/material/datepicker';
+import { Temporal } from 'temporal-polyfill';
+
+@Component({
+  selector: 'app-example',
+  imports: [MatCalendar],
+  template: `<mat-calendar [selected]="selected()" (selectedChange)="selected.set($event)" />`,
+})
+export class Example {
+  protected readonly selected = signal<Temporal.PlainDate | null>(null);
+}
+```
+
+`provideTemporalDateAdapter(formats?)` accepts an optional `MatDateFormats` override;
+the default is `NGX_DT_TEMPORAL_DATE_FORMATS`.
+
+## The adapter
+
+`TemporalDateAdapter` implements Material's abstract `DateAdapter<Temporal.PlainDate>`:
+
+- **Locale-aware** month/weekday/date names and first-day-of-week via `Intl`.
+- **Parsing** — ISO-8601 fast path plus an `Intl`-derived locale-numeric fallback
+  (Temporal has no format-based parser); unparseable input yields an invalid-date
+  sentinel so forms surface a parse error rather than silently nulling.
+- **Zone-naive** by design (`PlainDate`); timezone-aware types are a future addition.
+
+## Building & testing
+
+This is an Angular CLI workspace using the Vitest unit-test builder.
 
 ```bash
-ng e2e
+ng build ngx-datetime-picker                 # ng-packagr build (both entry points)
+ng test ngx-datetime-picker --watch=false    # Vitest
 ```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
