@@ -1,5 +1,4 @@
-import { Component, signal } from '@angular/core';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { Component, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
