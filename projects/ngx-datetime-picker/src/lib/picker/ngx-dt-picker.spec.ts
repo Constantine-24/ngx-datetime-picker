@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { NgxDtPicker } from './ngx-dt-picker';
+import { NgxDtPicker, NgxDtPickerInput } from './ngx-dt-picker';
 
 @Component({
   imports: [NgxDtPicker],
@@ -277,5 +277,86 @@ describe('NgxDtPicker — constraints', () => {
     const june15 = labelOf('June 15, 2026');
     expect(june15).toBeTruthy();
     expect(june15?.getAttribute('aria-disabled')).toBeNull();
+  });
+});
+
+// --- Plan 3: value-bridge seam ---------------------------------------------
+
+/** Minimal fake input implementing the picker's registration contract. */
+class FakeInput implements NgxDtPickerInput<Temporal.PlainDate> {
+  readonly _value = signal<Temporal.PlainDate | null>(null);
+  readonly value = this._value.asReadonly();
+  fromPicker: Temporal.PlainDate | null | undefined;
+  readonly origin = document.createElement('input');
+  setValueFromPicker(date: Temporal.PlainDate | null): void {
+    this.fromPicker = date;
+    this._value.set(date);
+  }
+  getOverlayOrigin(): HTMLElement {
+    return this.origin;
+  }
+}
+
+describe('NgxDtPicker — value bridge', () => {
+  beforeEach(setup);
+
+  it('routes calendar selection to the registered input, not [(value)]', async () => {
+    const fixture = TestBed.createComponent(InlineHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const input = new FakeInput();
+    picker.registerInput(input);
+
+    const cell: HTMLElement = fixture.nativeElement.querySelector('.mat-calendar-body-cell');
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(input.fromPicker).toBeInstanceOf(Temporal.PlainDate);
+    expect(fixture.componentInstance.value()).toBeNull();
+  });
+
+  it('drives the calendar [selected] from the registered input value', async () => {
+    const fixture = TestBed.createComponent(InlineHost);
+    fixture.detectChanges();
+    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const input = new FakeInput();
+    input._value.set(Temporal.PlainDate.from('2026-06-15'));
+    picker.registerInput(input);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const selected = fixture.nativeElement.querySelector('.mat-calendar-body-selected');
+    expect(selected).toBeTruthy();
+  });
+
+  it('throws when a second, different input registers', () => {
+    const fixture = TestBed.createComponent(InlineHost);
+    fixture.detectChanges();
+    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    picker.registerInput(new FakeInput());
+    expect(() => picker.registerInput(new FakeInput())).toThrow(/single/);
+  });
+});
+
+describe('NgxDtPicker — opens anchored to the input', () => {
+  beforeEach(setup);
+
+  it('open() with no origin uses the registered input element', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    const input = new FakeInput();
+    document.body.appendChild(input.origin);
+    picker.registerInput(input);
+
+    picker.open();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(picker.isOpen()).toBe(true);
+    expect(overlayPanel()).toBeTruthy();
+    input.origin.remove();
   });
 });
