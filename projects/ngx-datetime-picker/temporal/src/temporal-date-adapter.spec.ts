@@ -108,6 +108,32 @@ describe('TemporalDateAdapter — parse', () => {
     const a = makeAdapter('en-US');
     expect(a.isValid(a.parse('13/40/2026') as Temporal.PlainDate)).toBe(false);
   });
+  it('re-derives field order when locale changes via setLocale', () => {
+    const a = makeAdapter('en-US');
+    expect(a.parse('06/20/2026')!.toString()).toBe('2026-06-20'); // m/d/y
+    a.setLocale('de-DE');
+    expect(a.parse('20.06.2026')!.toString()).toBe('2026-06-20'); // d/m/y
+  });
+  it('numeric string with extra number groups → invalid', () => {
+    const a = makeAdapter('en-US');
+    expect(
+      a.isValid(a.parse('Version 2 dated 06/20/2026') as Temporal.PlainDate),
+    ).toBe(false);
+  });
+});
+
+describe('TemporalDateAdapter — getDateNames (locale-aware)', () => {
+  it('returns ASCII 1..31 for en-US', () => {
+    const names = makeAdapter('en-US').getDateNames();
+    expect(names).toHaveLength(31);
+    expect(names[0]).toBe('1');
+    expect(names[30]).toBe('31');
+  });
+  it('uses locale numerals for ar-EG (not ASCII)', () => {
+    const names = makeAdapter('ar-EG').getDateNames();
+    expect(names).toHaveLength(31);
+    expect(names[0]).not.toBe('1'); // Eastern Arabic numeral, e.g. ١
+  });
 });
 
 describe('TemporalDateAdapter — format / compare / validity', () => {

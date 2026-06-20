@@ -11,12 +11,25 @@ function range<T>(length: number, fn: (i: number) => T): T[] {
 
 @Injectable()
 export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
+  private fieldOrder: Array<'year' | 'month' | 'day'> = ['year', 'month', 'day'];
+
   constructor() {
     super();
-    this.setLocale(inject(MAT_DATE_LOCALE, { optional: true }) ?? 'en-US');
+    this.setLocale(
+      (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US',
+    );
   }
 
-  createDate(year: number, month: number, date: number): Temporal.PlainDate {
+  override setLocale(locale: string): void {
+    super.setLocale(locale);
+    this.fieldOrder = this.numericFieldOrder();
+  }
+
+  override createDate(
+    year: number,
+    month: number,
+    date: number,
+  ): Temporal.PlainDate {
     if (month < 0 || month > 11) {
       throw new Error(`Invalid month index "${month}". Expected 0-11.`);
     }
@@ -30,16 +43,16 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   }
 
   // --- remaining abstract members are filled in by Tasks 6-10 ---
-  getYear(date: Temporal.PlainDate): number {
+  override getYear(date: Temporal.PlainDate): number {
     return date.year;
   }
-  getMonth(date: Temporal.PlainDate): number {
+  override getMonth(date: Temporal.PlainDate): number {
     return date.month - 1;
   }
-  getDate(date: Temporal.PlainDate): number {
+  override getDate(date: Temporal.PlainDate): number {
     return date.day;
   }
-  getDayOfWeek(date: Temporal.PlainDate): number {
+  override getDayOfWeek(date: Temporal.PlainDate): number {
     return date.dayOfWeek % 7;
   }
   override getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
@@ -49,8 +62,12 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
     });
     return range(12, (i) => fmt.format(new Date(Date.UTC(2026, i, 1))));
   }
-  getDateNames(): string[] {
-    return range(31, (i) => String(i + 1));
+  override getDateNames(): string[] {
+    const fmt = new Intl.DateTimeFormat(this.locale, {
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+    return range(31, (i) => fmt.format(new Date(Date.UTC(2026, 0, i + 1))));
   }
   override getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
     const fmt = new Intl.DateTimeFormat(this.locale, {
@@ -65,22 +82,25 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   }
   override getFirstDayOfWeek(): number {
     try {
-      const locale = new Intl.Locale(this.locale);
-      // weekInfo.firstDay is 1=Mon .. 7=Sun; map to 0=Sun .. 6=Sat.
-      const firstDay = (locale as { weekInfo?: { firstDay?: number } }).weekInfo
-        ?.firstDay;
-      return firstDay == null ? 0 : firstDay % 7;
+      const locale = new Intl.Locale(this.locale) as Intl.Locale & {
+        getWeekInfo?: () => { firstDay?: number };
+        weekInfo?: { firstDay?: number };
+      };
+      const info = locale.getWeekInfo?.() ?? locale.weekInfo;
+      const firstDay = info?.firstDay ?? 0;
+      // weekInfo encodes Mon=1..Sun=7; Material wants Sun=0..Sat=6.
+      return firstDay === 7 ? 0 : firstDay;
     } catch {
       return 0;
     }
   }
-  getNumDaysInMonth(date: Temporal.PlainDate): number {
+  override getNumDaysInMonth(date: Temporal.PlainDate): number {
     return date.daysInMonth;
   }
-  clone(date: Temporal.PlainDate): Temporal.PlainDate {
+  override clone(date: Temporal.PlainDate): Temporal.PlainDate {
     return Temporal.PlainDate.from(date);
   }
-  today(): Temporal.PlainDate {
+  override today(): Temporal.PlainDate {
     return Temporal.Now.plainDateISO();
   }
   override parse(value: unknown): Temporal.PlainDate | null {
@@ -101,15 +121,17 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
 
   private parseLocaleNumeric(str: string): Temporal.PlainDate | null {
     const nums = str.match(/\d+/g);
-    if (!nums || nums.length < 3) return null;
-    const order = this.numericFieldOrder();
+    if (!nums || nums.length !== 3) return null;
+    const order = this.fieldOrder;
     const field: Record<'year' | 'month' | 'day', number> = {
       year: 0,
       month: 0,
       day: 0,
     };
     order.forEach((f, i) => (field[f] = Number(nums[i])));
-    if (field.year < 100) field.year += 2000; // naive 2-digit-year expansion
+    // 2-digit years are expanded into the 2000s (e.g. "26" → 2026, "99" → 2099).
+    // This is a fixed-window heuristic; a configurable pivot year is a future enhancement.
+    if (field.year < 100) field.year += 2000;
     try {
       return Temporal.PlainDate.from(field, { overflow: 'reject' });
     } catch {
@@ -161,28 +183,34 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   ): number {
     return Temporal.PlainDate.compare(first, second);
   }
-  addCalendarYears(date: Temporal.PlainDate, years: number): Temporal.PlainDate {
+  override addCalendarYears(
+    date: Temporal.PlainDate,
+    years: number,
+  ): Temporal.PlainDate {
     return date.add({ years });
   }
-  addCalendarMonths(
+  override addCalendarMonths(
     date: Temporal.PlainDate,
     months: number,
   ): Temporal.PlainDate {
     return date.add({ months });
   }
-  addCalendarDays(date: Temporal.PlainDate, days: number): Temporal.PlainDate {
+  override addCalendarDays(
+    date: Temporal.PlainDate,
+    days: number,
+  ): Temporal.PlainDate {
     return date.add({ days });
   }
-  toIso8601(date: Temporal.PlainDate): string {
+  override toIso8601(date: Temporal.PlainDate): string {
     return date.toString();
   }
-  isDateInstance(obj: unknown): boolean {
+  override isDateInstance(obj: unknown): boolean {
     return obj instanceof Temporal.PlainDate;
   }
-  isValid(date: Temporal.PlainDate): boolean {
+  override isValid(date: Temporal.PlainDate): boolean {
     return date instanceof Temporal.PlainDate;
   }
-  invalid(): Temporal.PlainDate {
+  override invalid(): Temporal.PlainDate {
     return INVALID;
   }
 }
