@@ -27,6 +27,15 @@ class Host {
   minuteStep = signal(1);
 }
 
+@Component({
+  imports: [NgxDtTimePanel],
+  template: `<ngx-dt-time-panel [(value)]="value" [hourCycle]="hourCycle()" />`,
+})
+class Host12 {
+  value = signal<Temporal.PlainTime | null>(null);
+  hourCycle = signal<12 | 24 | null>(null);
+}
+
 function setup() {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
@@ -164,5 +173,93 @@ describe('NgxDtTimePanel — 24h', () => {
     expect(hour.getAttribute('aria-valuenow')).toBe('9');
     expect(hour.getAttribute('aria-valuemin')).toBe('0');
     expect(hour.getAttribute('aria-valuemax')).toBe('23');
+  });
+
+  it('does not re-announce when a step is a no-op at the boundary', async () => {
+    const fixture = TestBed.createComponent(Host);
+    // Use a value whose minute does NOT wrap on +1, so the composed time
+    // (23:01) exceeds max and clamps straight back to 23:00 — a true no-op.
+    // (The per-field minute wrap from :59 is intentional, so :59 is not a no-op.)
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('23:00'));
+    fixture.componentInstance.max.set(Temporal.PlainTime.from('23:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    // Stepping minute up at the max is a no-op; value stays 23:00.
+    root.querySelector<HTMLButtonElement>('[data-testid="up-minute"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.hour).toBe(23);
+    expect(v.minute).toBe(0);
+  });
+
+  it('clamps typed input above the field max instead of wrapping', async () => {
+    const fixture = await render(new Host());
+    const root = fixture.nativeElement as HTMLElement;
+    const minute = fields(root)[1];
+    minute.value = '99';
+    minute.dispatchEvent(new Event('input'));
+    minute.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(59);
+  });
+});
+
+describe('NgxDtTimePanel — 12h cycle', () => {
+  beforeEach(setup);
+
+  it('displays the hour in 12-hour form with a meridiem toggle', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('13:30'));
+    fixture.componentInstance.hourCycle.set(12);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const hour = root.querySelector<HTMLInputElement>('input[role="spinbutton"]')!;
+    expect(hour.value).toBe('01');
+    expect(hour.getAttribute('aria-valuemin')).toBe('1');
+    expect(hour.getAttribute('aria-valuemax')).toBe('12');
+    const pm = root.querySelector<HTMLButtonElement>('[data-testid="meridiem-pm"]')!;
+    expect(pm.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('toggling to AM subtracts 12 hours', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('13:30'));
+    fixture.componentInstance.hourCycle.set(12);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('[data-testid="meridiem-am"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.hour).toBe(1);
+  });
+
+  it('type-to-set in 12h keeps the current meridiem', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('15:00')); // 3 PM
+    fixture.componentInstance.hourCycle.set(12);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const hour = root.querySelector<HTMLInputElement>('input[role="spinbutton"]')!;
+    hour.value = '5';
+    hour.dispatchEvent(new Event('input'));
+    hour.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.hour).toBe(17); // 5 PM
+  });
+
+  it('no meridiem toggle is rendered in 24h mode', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.hourCycle.set(24);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="meridiem-am"]')).toBeNull();
   });
 });
