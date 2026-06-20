@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtTimePanel } from './ngx-dt-time-panel';
@@ -16,6 +17,7 @@ import { NgxDtTimePanel } from './ngx-dt-time-panel';
       [min]="min()"
       [max]="max()"
       [minuteStep]="minuteStep()"
+      [hourCycle]="hourCycle()"
     />
   `,
 })
@@ -25,6 +27,7 @@ class Host {
   min = signal<Temporal.PlainTime | null>(null);
   max = signal<Temporal.PlainTime | null>(null);
   minuteStep = signal(1);
+  hourCycle = signal<12 | 24 | null>(24);
 }
 
 @Component({
@@ -252,6 +255,40 @@ describe('NgxDtTimePanel — 12h cycle', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.value()!.hour).toBe(17); // 5 PM
+  });
+
+  it('defaults to 12h for an en-US locale when hourCycle is null', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    // hourCycle left at null (default); en-US is the ambient test locale.
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('13:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const hour = root.querySelector<HTMLInputElement>('input[role="spinbutton"]')!;
+    expect(hour.getAttribute('aria-valuemax')).toBe('12');
+    expect(hour.value).toBe('01');
+    expect(root.querySelector('[data-testid="meridiem-pm"]')).toBeTruthy();
+  });
+
+  it('defaults to 24h for an en-GB locale when hourCycle is null', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalTimeAdapter(),
+        { provide: MAT_DATE_LOCALE, useValue: 'en-GB' },
+      ],
+    });
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('13:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const hour = root.querySelector<HTMLInputElement>('input[role="spinbutton"]')!;
+    expect(hour.getAttribute('aria-valuemax')).toBe('23');
+    expect(hour.value).toBe('13');
+    expect(root.querySelector('[data-testid="meridiem-am"]')).toBeNull();
   });
 
   it('no meridiem toggle is rendered in 24h mode', async () => {

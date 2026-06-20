@@ -1,12 +1,5 @@
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  LOCALE_ID,
-  model,
-} from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { NgxDtTimeAdapter } from '../time/ngx-dt-time-adapter';
 
@@ -275,7 +268,6 @@ function pad(value: number): string {
 export class NgxDtTimePanel<T = unknown> {
   protected readonly adapter = inject<NgxDtTimeAdapter<T>>(NgxDtTimeAdapter);
   private readonly live = inject(LiveAnnouncer);
-  private readonly defaultLocale = inject(LOCALE_ID);
   private readonly locale =
     (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
@@ -290,10 +282,9 @@ export class NgxDtTimePanel<T = unknown> {
   readonly hourCycle = input<12 | 24 | null>(null);
 
   protected readonly effectiveHourCycle = computed<12 | 24>(() => {
-    // `hourCycle` is the explicit opt-in. When unset we honour an explicitly
-    // configured 12-hour locale, but default to 24h otherwise (and whenever the
-    // locale is only the ambient `LOCALE_ID` default) so the long-standing 24h
-    // default keeps holding for unconfigured consumers.
+    // `hourCycle` is the explicit opt-in. When unset we derive the cycle purely
+    // from the resolved locale (`MAT_DATE_LOCALE`, defaulting to `'en-US'`),
+    // matching Material's `MatTimepicker` locale-aware behaviour.
     const explicit = this.hourCycle();
     if (explicit != null) return explicit;
     return this.localeUses12Hour() ? 12 : 24;
@@ -306,9 +297,6 @@ export class NgxDtTimePanel<T = unknown> {
   });
 
   private localeUses12Hour(): boolean {
-    // Treat the ambient default locale as 24h so the cycle stays opt-in via
-    // `hourCycle` or an explicitly provided `MAT_DATE_LOCALE`.
-    if (this.locale === this.defaultLocale) return false;
     return (
       new Intl.DateTimeFormat(this.locale, { hour: 'numeric' }).resolvedOptions()
         .hour12 === true
