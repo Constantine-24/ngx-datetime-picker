@@ -8,18 +8,8 @@ const INVALID = {} as Temporal.PlainTime;
 
 @Injectable()
 export class TemporalTimeAdapter extends NgxDtTimeAdapter<Temporal.PlainTime> {
-  private readonly locale: string;
-
-  constructor() {
-    super();
-    let locale: string | null = null;
-    try {
-      locale = inject(MAT_DATE_LOCALE, { optional: true }) as string | null;
-    } catch {
-      // Outside Angular DI context (e.g. unit tests instantiated directly).
-    }
-    this.locale = locale ?? 'en-US';
-  }
+  private readonly locale =
+    (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
   now(): Temporal.PlainTime {
     return Temporal.Now.plainTimeISO();
