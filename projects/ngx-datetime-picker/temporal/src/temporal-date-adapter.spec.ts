@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { TemporalDateAdapter } from './temporal-date-adapter';
 
 function makeAdapter(locale = 'en-US'): TemporalDateAdapter {
+  TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
       { provide: MAT_DATE_LOCALE, useValue: locale },
@@ -51,5 +52,28 @@ describe('TemporalDateAdapter — field accessors & arithmetic', () => {
   });
   it('clone is value-equal', () => {
     expect(adapter.clone(jun20).equals(jun20)).toBe(true);
+  });
+});
+
+describe('TemporalDateAdapter — localized names', () => {
+  it('English month names (long)', () => {
+    const a = makeAdapter('en-US');
+    expect(a.getMonthNames('long')[5]).toBe('June');
+    expect(a.getMonthNames('short')[5]).toBe('Jun');
+  });
+  it('German month names', () => {
+    expect(makeAdapter('de-DE').getMonthNames('long')[5]).toBe('Juni');
+  });
+  it('day-of-week names start on Sunday', () => {
+    const names = makeAdapter('en-US').getDayOfWeekNames('long');
+    expect(names[0]).toBe('Sunday');
+    expect(names[6]).toBe('Saturday');
+  });
+  it('first day of week is locale-aware', () => {
+    expect(makeAdapter('en-US').getFirstDayOfWeek()).toBe(0); // Sunday
+    expect(makeAdapter('de-DE').getFirstDayOfWeek()).toBe(1); // Monday
+  });
+  it('year name', () => {
+    expect(makeAdapter('en-US').getYearName(Temporal.PlainDate.from('2026-06-20'))).toBe('2026');
   });
 });
