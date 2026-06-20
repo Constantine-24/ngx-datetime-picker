@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
 import { DateRange } from '@angular/material/datepicker';
 import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
@@ -154,6 +155,33 @@ describe('NgxDtDateRangeInput — picker bridge', () => {
     const { start, end } = inputs(fixture);
     expect(start.value).toMatch(/\d+\/\d+\/\d{4}/);
     expect(end.value).toMatch(/\d+\/\d+\/\d{4}/);
+  });
+
+  it('setRangeFromPicker does not re-emit when the range is unchanged', async () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const container = fixture.debugElement.query(By.directive(NgxDtDateRangeInput))
+      .componentInstance as NgxDtDateRangeInput<Temporal.PlainDate>;
+    const emissions: DateRange<Temporal.PlainDate>[] = [];
+    container.rangeChange.subscribe((r) => emissions.push(r));
+
+    container.setRangeFromPicker(
+      new DateRange(
+        Temporal.PlainDate.from('2026-06-10'),
+        Temporal.PlainDate.from('2026-06-20'),
+      ),
+    );
+    // Identical values, different instance — must NOT re-emit.
+    container.setRangeFromPicker(
+      new DateRange(
+        Temporal.PlainDate.from('2026-06-10'),
+        Temporal.PlainDate.from('2026-06-20'),
+      ),
+    );
+
+    expect(emissions.length).toBe(1);
   });
 
   it('opens the picker on Alt+ArrowDown from the start input', async () => {

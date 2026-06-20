@@ -233,12 +233,19 @@ export class NgxDtDateRangeInput<D = unknown>
   setRangeFromPicker(range: DateRange<D>): void {
     this._startValid = true;
     this._endValid = true;
+    const prevStart = this._start();
+    const prevEnd = this._end();
     this._start.set(range.start);
     this._end.set(range.end);
     this._startPart?.formatValue(range.start);
     this._endPart?.formatValue(range.end);
-    this._onChange(range);
-    this.rangeChange.emit(range);
+    if (
+      !this.adapter.sameDate(range.start, prevStart) ||
+      !this.adapter.sameDate(range.end, prevEnd)
+    ) {
+      this._onChange(range);
+      this.rangeChange.emit(range);
+    }
     this._onTouched();
     this._onValidatorChange();
   }
