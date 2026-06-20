@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, ElementRef, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -57,5 +57,113 @@ describe('NgxDtPicker — inline', () => {
     expect(fixture.componentInstance.value()).toBeInstanceOf(
       Temporal.PlainDate,
     );
+  });
+});
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker [(value)]="value" />
+  `,
+})
+class OverlayHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker [disabled]="true" [(value)]="value" />
+  `,
+})
+class DisabledOverlayHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+function overlayPanel(): HTMLElement | null {
+  return document.querySelector('.cdk-overlay-container .ngx-dt-panel');
+}
+
+describe('NgxDtPicker — overlay', () => {
+  beforeEach(setup);
+
+  it('attaches the panel to the overlay container when opened', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    expect(overlayPanel()).toBeNull();
+
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(overlayPanel()).toBeTruthy();
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+
+  it('emits openedChange/opened/closed', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    const events: string[] = [];
+    picker.opened.subscribe(() => events.push('opened'));
+    picker.closed.subscribe(() => events.push('closed'));
+    picker.openedChange.subscribe((v) => events.push(`change:${v}`));
+
+    picker.open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    picker.close();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(events).toEqual(['change:true', 'opened', 'change:false', 'closed']);
+  });
+
+  it('auto-closes after a date is picked in overlay mode', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cell = document.querySelector<HTMLElement>(
+      '.cdk-overlay-container .mat-calendar-body-cell',
+    )!;
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picker().isOpen()).toBe(false);
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDate);
+  });
+
+  it('does not open when disabled', async () => {
+    // `disabled` is bound true through the real signal input on the host
+    // template (cleaner than monkey-patching the signal); open() must no-op.
+    const fixture = TestBed.createComponent(DisabledOverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    expect(picker.disabled()).toBe(true);
+    picker.open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(picker.isOpen()).toBe(false);
+    expect(overlayPanel()).toBeNull();
   });
 });
