@@ -52,7 +52,7 @@ function pad(value: number): string {
           [attr.aria-label]="'Hours'"
           [attr.aria-valuemin]="hourMin()"
           [attr.aria-valuemax]="hourMax()"
-          [attr.aria-valuenow]="parts()?.hour ?? null"
+          [attr.aria-valuenow]="parts() ? displayHour(parts()!.hour) : null"
           [attr.aria-valuetext]="hourText() === '--' ? null : hourText()"
           (keydown)="onFieldKeydown('hour', $event)"
           (blur)="commitField('hour', $event)"
