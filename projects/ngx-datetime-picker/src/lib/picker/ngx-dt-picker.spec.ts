@@ -1,0 +1,281 @@
+import { Component, ElementRef, signal, viewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { Temporal } from 'temporal-polyfill';
+import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { NgxDtPicker } from './ngx-dt-picker';
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      #picker
+      [inline]="true"
+      [(value)]="value"
+    />
+  `,
+})
+class InlineHost {
+  value = signal<Temporal.PlainDate | null>(null);
+}
+
+function setup() {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    providers: [
+      provideZonelessChangeDetection(),
+      provideNoopAnimations(),
+      provideTemporalDateAdapter(),
+    ],
+  });
+}
+
+describe('NgxDtPicker — inline', () => {
+  beforeEach(setup);
+
+  it('renders a MatCalendar inline', async () => {
+    const fixture = TestBed.createComponent(InlineHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('mat-calendar'),
+    ).toBeTruthy();
+  });
+
+  it('writes the picked date back through [(value)]', async () => {
+    const fixture = TestBed.createComponent(InlineHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cell: HTMLElement = fixture.nativeElement.querySelector(
+      '.mat-calendar-body-cell',
+    );
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBeInstanceOf(
+      Temporal.PlainDate,
+    );
+  });
+});
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker [(value)]="value" />
+  `,
+})
+class OverlayHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker [disabled]="true" [(value)]="value" />
+  `,
+})
+class DisabledOverlayHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+function overlayPanel(): HTMLElement | null {
+  return document.querySelector('.cdk-overlay-container .ngx-dt-panel');
+}
+
+describe('NgxDtPicker — overlay', () => {
+  beforeEach(setup);
+
+  it('attaches the panel to the overlay container when opened', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    expect(overlayPanel()).toBeNull();
+
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(overlayPanel()).toBeTruthy();
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+
+  it('emits openedChange/opened/closed', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    const events: string[] = [];
+    picker.opened.subscribe(() => events.push('opened'));
+    picker.closed.subscribe(() => events.push('closed'));
+    picker.openedChange.subscribe((v) => events.push(`change:${v}`));
+
+    picker.open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    picker.close();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(events).toEqual(['change:true', 'opened', 'change:false', 'closed']);
+  });
+
+  it('auto-closes after a date is picked in overlay mode', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cell = document.querySelector<HTMLElement>(
+      '.cdk-overlay-container .mat-calendar-body-cell',
+    )!;
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picker().isOpen()).toBe(false);
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDate);
+  });
+
+  it('does not open an overlay without an origin', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    picker.open(); // no origin ever supplied
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(picker.isOpen()).toBe(false);
+    expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeNull();
+  });
+
+  it('does not open when disabled', async () => {
+    // `disabled` is bound true through the real signal input on the host
+    // template (cleaner than monkey-patching the signal); open() must no-op.
+    const fixture = TestBed.createComponent(DisabledOverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    expect(picker.disabled()).toBe(true);
+    picker.open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(picker.isOpen()).toBe(false);
+    expect(overlayPanel()).toBeNull();
+  });
+});
+
+describe('NgxDtPicker — overlay a11y', () => {
+  beforeEach(setup);
+
+  it('closes on Escape and restores focus to the trigger', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const trigger = fixture.componentInstance.trigger().nativeElement;
+    trigger.focus();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const panel = overlayPanel()!;
+    panel.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picker().isOpen()).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('renders role="dialog" with aria-modal on the overlay panel', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const panel = overlayPanel()!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('exposes an accessible name on the overlay dialog', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const panel = overlayPanel()!;
+    expect(panel.getAttribute('aria-label')).toBe('Choose a date');
+  });
+});
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      [inline]="true"
+      [(value)]="value"
+      [min]="min"
+      [max]="max"
+      [dateFilter]="filter"
+    />
+  `,
+})
+class ConstrainedHost {
+  value = signal<Temporal.PlainDate | null>(
+    Temporal.PlainDate.from('2026-06-15'),
+  );
+  min = Temporal.PlainDate.from('2026-06-10');
+  max = Temporal.PlainDate.from('2026-06-20');
+  // disallow the 12th
+  filter = (d: Temporal.PlainDate) => d.day !== 12;
+}
+
+describe('NgxDtPicker — constraints', () => {
+  beforeEach(setup);
+
+  it('disables out-of-range and filtered days', async () => {
+    const fixture = TestBed.createComponent(ConstrainedHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const labelOf = (sel: string) =>
+      Array.from(
+        root.querySelectorAll<HTMLButtonElement>('.mat-calendar-body-cell'),
+      ).find((b) => b.getAttribute('aria-label')?.includes(sel));
+
+    // June 5 is before min → disabled
+    const june5 = labelOf('June 5, 2026');
+    expect(june5?.getAttribute('aria-disabled')).toBe('true');
+    // June 12 filtered out → disabled
+    const june12 = labelOf('June 12, 2026');
+    expect(june12?.getAttribute('aria-disabled')).toBe('true');
+    // June 15 allowed → enabled. In Material v22 the body cell binds
+    // `[attr.aria-disabled]="!item.enabled || null"`, so an enabled cell omits
+    // the attribute (null) rather than setting it to "false".
+    const june15 = labelOf('June 15, 2026');
+    expect(june15).toBeTruthy();
+    expect(june15?.getAttribute('aria-disabled')).toBeNull();
+  });
+});
