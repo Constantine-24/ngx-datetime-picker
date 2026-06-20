@@ -4,8 +4,10 @@ import {
   computed,
   inject,
   input,
+  LOCALE_ID,
   model,
 } from '@angular/core';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { NgxDtTimeAdapter } from '../time/ngx-dt-time-adapter';
 
 type TimeField = 'hour' | 'minute' | 'second';
@@ -163,6 +165,31 @@ function pad(value: number): string {
           </button>
         </div>
       }
+
+      @if (effectiveHourCycle() === 12) {
+        <div class="ngx-dt-time-meridiem" role="group" [attr.aria-label]="'AM or PM'">
+          <button
+            type="button"
+            class="ngx-dt-time-meridiem-btn"
+            data-testid="meridiem-am"
+            [disabled]="disabled()"
+            [attr.aria-pressed]="meridiem() === 'AM'"
+            (click)="setMeridiem('AM')"
+          >
+            AM
+          </button>
+          <button
+            type="button"
+            class="ngx-dt-time-meridiem-btn"
+            data-testid="meridiem-pm"
+            [disabled]="disabled()"
+            [attr.aria-pressed]="meridiem() === 'PM'"
+            (click)="setMeridiem('PM')"
+          >
+            PM
+          </button>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -217,6 +244,30 @@ function pad(value: number): string {
       .ngx-dt-time-sep {
         padding: 0 2px;
       }
+      .ngx-dt-time-meridiem {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-inline-start: 6px;
+      }
+      .ngx-dt-time-meridiem-btn {
+        min-width: 40px;
+        min-height: 24px;
+        border: 1px solid var(--mat-sys-outline, currentColor);
+        border-radius: 4px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      .ngx-dt-time-meridiem-btn[aria-pressed='true'] {
+        background: var(--mat-sys-primary, Highlight);
+        color: var(--mat-sys-on-primary, HighlightText);
+        border-color: transparent;
+      }
+      .ngx-dt-time-meridiem-btn[disabled] {
+        opacity: 0.38;
+        cursor: default;
+      }
     `,
   ],
   host: { class: 'ngx-dt-time-panel-host' },
@@ -224,6 +275,9 @@ function pad(value: number): string {
 export class NgxDtTimePanel<T = unknown> {
   protected readonly adapter = inject<NgxDtTimeAdapter<T>>(NgxDtTimeAdapter);
   private readonly live = inject(LiveAnnouncer);
+  private readonly defaultLocale = inject(LOCALE_ID);
+  private readonly locale =
+    (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
   /** Two-way time value. `model()` provides `valueChange`. */
   readonly value = model<T | null>(null);
@@ -233,6 +287,33 @@ export class NgxDtTimePanel<T = unknown> {
   readonly showSeconds = input(false);
   readonly disabled = input(false);
   readonly ariaLabel = input('Choose a time');
+  readonly hourCycle = input<12 | 24 | null>(null);
+
+  protected readonly effectiveHourCycle = computed<12 | 24>(() => {
+    // `hourCycle` is the explicit opt-in. When unset we honour an explicitly
+    // configured 12-hour locale, but default to 24h otherwise (and whenever the
+    // locale is only the ambient `LOCALE_ID` default) so the long-standing 24h
+    // default keeps holding for unconfigured consumers.
+    const explicit = this.hourCycle();
+    if (explicit != null) return explicit;
+    return this.localeUses12Hour() ? 12 : 24;
+  });
+
+  protected readonly meridiem = computed<'AM' | 'PM' | null>(() => {
+    const p = this.parts();
+    if (!p) return null;
+    return p.hour < 12 ? 'AM' : 'PM';
+  });
+
+  private localeUses12Hour(): boolean {
+    // Treat the ambient default locale as 24h so the cycle stays opt-in via
+    // `hourCycle` or an explicitly provided `MAT_DATE_LOCALE`.
+    if (this.locale === this.defaultLocale) return false;
+    return (
+      new Intl.DateTimeFormat(this.locale, { hour: 'numeric' }).resolvedOptions()
+        .hour12 === true
+    );
+  }
 
   /** Components of the current value, or null when unset/invalid. */
   protected readonly parts = computed<TimeParts | null>(() => {
@@ -243,9 +324,9 @@ export class NgxDtTimePanel<T = unknown> {
     return null;
   });
 
-  // ARIA bounds for the hour field (overridden for 12h mode in a later task).
-  protected readonly hourMin = computed(() => 0);
-  protected readonly hourMax = computed(() => 23);
+  // ARIA bounds for the hour field (cycle-aware).
+  protected readonly hourMin = computed(() => (this.effectiveHourCycle() === 12 ? 1 : 0));
+  protected readonly hourMax = computed(() => (this.effectiveHourCycle() === 12 ? 12 : 23));
 
   protected readonly hourText = computed(() => {
     const p = this.parts();
@@ -292,7 +373,16 @@ export class NgxDtTimePanel<T = unknown> {
     input.value = this.fieldText(field);
   }
 
-  /** Apply a parts mutation, compose, clamp, set, announce. */
+  protected setMeridiem(target: 'AM' | 'PM'): void {
+    this.commit((p) => {
+      let hour = p.hour;
+      if (target === 'AM' && hour >= 12) hour -= 12;
+      if (target === 'PM' && hour < 12) hour += 12;
+      return { ...p, hour };
+    });
+  }
+
+  /** Apply a parts mutation, compose, clamp, set, announce on change. */
   private commit(mutate: (p: TimeParts) => TimeParts): void {
     const base = this.parts() ?? this.toParts(this.baseTime());
     const next = mutate(base);
@@ -300,8 +390,8 @@ export class NgxDtTimePanel<T = unknown> {
     const clamped = this.adapter.clampTime(composed, this.min(), this.max());
     if (!this.adapter.sameTime(clamped, this.value())) {
       this.value.set(clamped);
+      void this.live.announce(this.announceText(clamped), 'polite');
     }
-    void this.live.announce(this.announceText(clamped), 'polite');
   }
 
   /** Seed editing when value is null: "now" clamped into `[min, max]`. */
@@ -316,11 +406,19 @@ export class NgxDtTimePanel<T = unknown> {
     return { ...parts, second: wrap(parts.second + delta, 60) };
   }
 
-  // Set a field from a typed number (24h mode; 12h override in a later task).
+  // Set a field from a typed number; clamps into range (cycle-aware for hour).
   protected setField(parts: TimeParts, field: TimeField, raw: number): TimeParts {
-    if (field === 'hour') return { ...parts, hour: raw % 24 };
-    if (field === 'minute') return { ...parts, minute: raw % 60 };
-    return { ...parts, second: raw % 60 };
+    if (field === 'hour') {
+      if (this.effectiveHourCycle() === 12) {
+        const h12 = Math.min(Math.max(raw, 1), 12); // clamp into 1..12
+        const pm = parts.hour >= 12;
+        const hour = (h12 % 12) + (pm ? 12 : 0);
+        return { ...parts, hour };
+      }
+      return { ...parts, hour: Math.min(raw, 23) };
+    }
+    if (field === 'minute') return { ...parts, minute: Math.min(raw, 59) };
+    return { ...parts, second: Math.min(raw, 59) };
   }
 
   protected toParts(t: T): TimeParts {
@@ -331,8 +429,12 @@ export class NgxDtTimePanel<T = unknown> {
     };
   }
 
-  // Hour shown in the field (identity in 24h; 12h mapping added in a later task).
+  // Hour shown in the field (identity in 24h; 1..12 mapping in 12h).
   protected displayHour(hour: number): number {
+    if (this.effectiveHourCycle() === 12) {
+      const h = hour % 12;
+      return h === 0 ? 12 : h;
+    }
     return hour;
   }
 
@@ -347,6 +449,7 @@ export class NgxDtTimePanel<T = unknown> {
       hour: '2-digit',
       minute: '2-digit',
       ...(this.showSeconds() ? { second: '2-digit' } : {}),
+      hour12: this.effectiveHourCycle() === 12,
     });
   }
 }
