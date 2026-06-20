@@ -77,3 +77,35 @@ describe('TemporalDateAdapter — localized names', () => {
     expect(makeAdapter('en-US').getYearName(Temporal.PlainDate.from('2026-06-20'))).toBe('2026');
   });
 });
+
+describe('TemporalDateAdapter — parse', () => {
+  it('parses ISO-8601', () => {
+    expect(makeAdapter().parse('2026-06-20')!.toString()).toBe('2026-06-20');
+  });
+  it('parses en-US m/d/y', () => {
+    expect(makeAdapter('en-US').parse('06/20/2026')!.toString()).toBe('2026-06-20');
+  });
+  it('parses de-DE d.m.y', () => {
+    expect(makeAdapter('de-DE').parse('20.06.2026')!.toString()).toBe('2026-06-20');
+  });
+  it('expands 2-digit years', () => {
+    expect(makeAdapter('en-US').parse('6/20/26')!.toString()).toBe('2026-06-20');
+  });
+  it('passes through an existing PlainDate', () => {
+    const d = Temporal.PlainDate.from('2026-06-20');
+    expect(makeAdapter().parse(d)).toBe(d);
+  });
+  it('null/empty → null', () => {
+    expect(makeAdapter().parse(null)).toBeNull();
+    expect(makeAdapter().parse('')).toBeNull();
+  });
+  it('garbage → invalid (not valid)', () => {
+    const a = makeAdapter('en-US');
+    const r = a.parse('not a date');
+    expect(a.isValid(r as Temporal.PlainDate)).toBe(false);
+  });
+  it('out-of-range numeric → invalid', () => {
+    const a = makeAdapter('en-US');
+    expect(a.isValid(a.parse('13/40/2026') as Temporal.PlainDate)).toBe(false);
+  });
+});

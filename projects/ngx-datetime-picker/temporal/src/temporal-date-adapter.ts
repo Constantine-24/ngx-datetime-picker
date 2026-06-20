@@ -83,8 +83,52 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   today(): Temporal.PlainDate {
     return Temporal.Now.plainDateISO();
   }
-  parse(value: unknown): Temporal.PlainDate | null {
-    return value == null ? null : INVALID;
+  override parse(value: unknown): Temporal.PlainDate | null {
+    if (value == null) return null;
+    if (value instanceof Temporal.PlainDate) return value;
+    const str = String(value).trim();
+    if (!str) return null;
+
+    // 1) ISO-8601 fast path (the only format Temporal.from understands).
+    try {
+      return Temporal.PlainDate.from(str, { overflow: 'reject' });
+    } catch {
+      /* fall through */
+    }
+    // 2) Locale numeric fallback.
+    return this.parseLocaleNumeric(str) ?? this.invalid();
+  }
+
+  private parseLocaleNumeric(str: string): Temporal.PlainDate | null {
+    const nums = str.match(/\d+/g);
+    if (!nums || nums.length < 3) return null;
+    const order = this.numericFieldOrder();
+    const field: Record<'year' | 'month' | 'day', number> = {
+      year: 0,
+      month: 0,
+      day: 0,
+    };
+    order.forEach((f, i) => (field[f] = Number(nums[i])));
+    if (field.year < 100) field.year += 2000; // naive 2-digit-year expansion
+    try {
+      return Temporal.PlainDate.from(field, { overflow: 'reject' });
+    } catch {
+      return null;
+    }
+  }
+
+  /** Derives field order (e.g. ['month','day','year'] for en-US) from Intl. */
+  private numericFieldOrder(): Array<'year' | 'month' | 'day'> {
+    const ref = new Date(Date.UTC(2026, 0, 2)); // y=2026, m=01, d=02 — all distinct
+    return new Intl.DateTimeFormat(this.locale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'UTC',
+    })
+      .formatToParts(ref)
+      .filter((p) => p.type === 'year' || p.type === 'month' || p.type === 'day')
+      .map((p) => p.type as 'year' | 'month' | 'day');
   }
   format(date: Temporal.PlainDate): string {
     return date.toString();
