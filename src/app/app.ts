@@ -12,6 +12,7 @@ import {
   NgxDtInput,
   NgxDtPicker,
   NgxDtStartDate,
+  NgxDtTimeInput,
   NgxDtToggle,
 } from 'ngx-datetime-picker';
 
@@ -30,6 +31,7 @@ import {
     NgxDtDateRangeInput,
     NgxDtStartDate,
     NgxDtEndDate,
+    NgxDtTimeInput,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -51,4 +53,8 @@ export class App {
   // Signal Forms
   protected readonly signalModel = signal<{ date: Temporal.PlainDate | null }>({ date: null });
   protected readonly signalForm = form(this.signalModel);
+
+  // Time picker
+  protected readonly inlineTime = signal<Temporal.PlainTime | null>(null);
+  protected readonly timeCtrl = new FormControl<Temporal.PlainTime | null>(null);
 }
