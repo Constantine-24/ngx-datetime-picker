@@ -29,7 +29,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -94,7 +96,11 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/ngx-datetime-picker/tsconfig.spec.json",
-            "buildTarget": "ngx-datetime-picker:build"
+            "buildTarget": "ngx-datetime-picker:build",
+            "include": [
+              "**/*.spec.ts",
+              "../temporal/src/**/*.spec.ts"
+            ]
           }
         }
       }
