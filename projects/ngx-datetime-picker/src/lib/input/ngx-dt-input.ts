@@ -8,11 +8,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import {
-  type ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-  NG_VALIDATORS,
-} from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   DateAdapter,
   MAT_DATE_FORMATS,
@@ -36,13 +32,12 @@ import {
   host: {
     class: 'ngx-dt-input',
     '[disabled]': '_disabled()',
-    '(input)': '_onInput($any($event.target).value)',
+    '(input)': '_onInput($event)',
     '(blur)': '_onBlur()',
     '(keydown)': '_onKeydown($event)',
   },
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NgxDtInput), multi: true },
-    { provide: NG_VALIDATORS, useExisting: forwardRef(() => NgxDtInput), multi: true },
   ],
 })
 export class NgxDtInput<D = unknown>
@@ -115,7 +110,8 @@ export class NgxDtInput<D = unknown>
 
   // --- host handlers --------------------------------------------------------
 
-  protected _onInput(text: string): void {
+  protected _onInput(event: Event): void {
+    const text = (event.target as HTMLInputElement).value;
     const parsed = this.adapter.parse(text, this.dateFormats.parse.dateInput);
     this._lastValueValid = parsed === null || this.adapter.isValid(parsed);
     const date = this.adapter.getValidDateOrNull(parsed);
