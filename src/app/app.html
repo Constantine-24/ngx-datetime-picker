@@ -46,6 +46,29 @@
     <ngx-dt-picker #sp />
     <p>Signal value: {{ signalForm.date().value()?.toString() ?? 'none' }}</p>
   </section>
+
+  <section>
+    <h2>Date range</h2>
+    <div class="ngx-dt-range-field">
+      <ngx-dt-date-range-input
+        [rangePicker]="rangePick"
+        [formControl]="rangeCtrl"
+        ariaLabel="Trip dates"
+      >
+        <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
+        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
+        <input ngxDtEndDate placeholder="End" aria-label="End date" />
+      </ngx-dt-date-range-input>
+      <ngx-dt-toggle [for]="rangePick" ariaLabel="Open range calendar" />
+    </div>
+    <ngx-dt-picker #rangePick type="date-range" />
+    <p>
+      Range:
+      {{ rangeCtrl.value?.start?.toString() ?? '—' }}
+      →
+      {{ rangeCtrl.value?.end?.toString() ?? '—' }}
+    </p>
+  </section>
 </main>
 
 <router-outlet />

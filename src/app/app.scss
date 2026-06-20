@@ -1,0 +1,26 @@
+.ngx-dt-range-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mat-sys-outline, #767680);
+  border-radius: 4px;
+
+  input {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    padding: 0.25rem;
+    inline-size: 7rem;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary, #4f46e5);
+      outline-offset: 1px;
+    }
+  }
+
+  .ngx-dt-range-sep {
+    opacity: 0.7;
+  }
+}
