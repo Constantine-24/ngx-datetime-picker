@@ -10,6 +10,7 @@ import {
   model,
   output,
   signal,
+  type Signal,
 } from '@angular/core';
 import { DateAdapter } from '@angular/material/core';
 import { MatCalendar } from '@angular/material/datepicker';
@@ -27,8 +28,8 @@ export type NgxDtOrigin = ElementRef | HTMLElement;
  * the input directive — the input imports this, not the other way around.
  */
 export interface NgxDtPickerInput<D> {
-  /** Current model value, as a signal accessor (read inside the calendar binding). */
-  readonly value: () => D | null;
+  /** Current model value as a signal — read reactively inside the calendar binding. */
+  readonly value: Signal<D | null>;
   /** Called by the picker when the calendar selection changes. */
   setValueFromPicker(date: D | null): void;
   /** Element the overlay anchors to when the picker is opened from the input. */
@@ -151,17 +152,15 @@ export class NgxDtPicker<D = unknown> {
     if (this.disabled() || this.inline() || this._open()) {
       return;
     }
-    if (origin) {
-      this._origin.set(origin);
-    } else if (!this._origin()) {
-      const input = this._input();
-      if (input) {
-        this._origin.set(input.getOverlayOrigin());
-      }
-    }
-    if (!this._origin()) {
+    // Anchor precedence: an explicit origin wins; otherwise prefer the
+    // registered input (the canonical anchor for a text-field picker), falling
+    // back to any previously-set origin.
+    const anchor =
+      origin ?? this._input()?.getOverlayOrigin() ?? this._origin();
+    if (!anchor) {
       return; // overlay requires an anchor element
     }
+    this._origin.set(anchor);
     this._open.set(true);
     this.openedChange.emit(true);
     this.opened.emit();
