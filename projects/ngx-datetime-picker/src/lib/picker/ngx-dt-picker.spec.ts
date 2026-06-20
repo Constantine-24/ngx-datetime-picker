@@ -482,3 +482,24 @@ describe('NgxDtPicker — range value bridge', () => {
     expect(() => picker.registerRangeInput(new FakeRangeInput())).toThrow(/single/);
   });
 });
+
+describe('NgxDtPicker — range opens anchored to the input', () => {
+  beforeEach(setup);
+
+  it('open() with no origin uses the registered range input element', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const picker = fixture.componentInstance.picker();
+    const input = new FakeRangeInput();
+    document.body.appendChild(input.origin);
+    picker.registerRangeInput(input);
+
+    picker.open();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(picker.isOpen()).toBe(true);
+    expect(overlayPanel()).toBeTruthy();
+    input.origin.remove();
+  });
+});
