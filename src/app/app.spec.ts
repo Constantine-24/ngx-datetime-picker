@@ -22,12 +22,19 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the smoke-test heading', async () => {
+  it('should render the date-picker heading', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Temporal adapter smoke test',
-    );
+    expect(compiled.querySelector('h1')?.textContent).toContain('date picker');
+  });
+
+  it('should render an inline picker as a mat-calendar', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const inlinePicker = compiled.querySelector('ngx-dt-picker');
+    expect(inlinePicker).toBeTruthy();
+    expect(inlinePicker?.querySelector('mat-calendar')).toBeTruthy();
   });
 });
