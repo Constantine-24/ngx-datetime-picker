@@ -42,20 +42,37 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   getDayOfWeek(date: Temporal.PlainDate): number {
     return date.dayOfWeek % 7;
   }
-  getMonthNames(): string[] {
-    return range(12, () => '');
+  override getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
+    const fmt = new Intl.DateTimeFormat(this.locale, {
+      month: style,
+      timeZone: 'UTC',
+    });
+    return range(12, (i) => fmt.format(new Date(Date.UTC(2026, i, 1))));
   }
   getDateNames(): string[] {
     return range(31, (i) => String(i + 1));
   }
-  getDayOfWeekNames(): string[] {
-    return range(7, () => '');
+  override getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
+    const fmt = new Intl.DateTimeFormat(this.locale, {
+      weekday: style,
+      timeZone: 'UTC',
+    });
+    // 2023-01-01 is a Sunday → iterate Sun..Sat.
+    return range(7, (i) => fmt.format(new Date(Date.UTC(2023, 0, 1 + i))));
   }
-  getYearName(date: Temporal.PlainDate): string {
-    return String(date.year);
+  override getYearName(date: Temporal.PlainDate): string {
+    return date.toLocaleString(this.locale, { year: 'numeric' });
   }
-  getFirstDayOfWeek(): number {
-    return 0;
+  override getFirstDayOfWeek(): number {
+    try {
+      const locale = new Intl.Locale(this.locale);
+      // weekInfo.firstDay is 1=Mon .. 7=Sun; map to 0=Sun .. 6=Sat.
+      const firstDay = (locale as { weekInfo?: { firstDay?: number } }).weekInfo
+        ?.firstDay;
+      return firstDay == null ? 0 : firstDay % 7;
+    } catch {
+      return 0;
+    }
   }
   getNumDaysInMonth(date: Temporal.PlainDate): number {
     return date.daysInMonth;
