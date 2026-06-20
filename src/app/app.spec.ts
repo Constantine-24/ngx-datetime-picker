@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+      ],
     }).compileComponents();
   });
 
@@ -14,10 +22,12 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render the smoke-test heading', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, date-time-picker');
+    expect(compiled.querySelector('h1')?.textContent).toContain(
+      'Temporal adapter smoke test',
+    );
   });
 });
