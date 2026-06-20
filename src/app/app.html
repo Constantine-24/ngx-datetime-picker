@@ -13,6 +13,39 @@
     <ngx-dt-picker #popup="ngxDtPicker" [(value)]="popupValue" />
     <p>Selected: {{ popupValue()?.toString() ?? 'none' }}</p>
   </section>
+
+  <section>
+    <h2>Reactive Forms (mat-form-field)</h2>
+    <mat-form-field>
+      <mat-label>Pick a date</mat-label>
+      <input matInput [ngxDtInput]="rp" [formControl]="reactiveCtrl" />
+      <ngx-dt-toggle matSuffix [for]="rp" />
+    </mat-form-field>
+    <ngx-dt-picker #rp />
+    <p>Reactive value: {{ reactiveCtrl.value?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Template-driven (ngModel)</h2>
+    <mat-form-field>
+      <mat-label>Pick a date</mat-label>
+      <input matInput [ngxDtInput]="mp" [(ngModel)]="ngModelValue" />
+      <ngx-dt-toggle matSuffix [for]="mp" />
+    </mat-form-field>
+    <ngx-dt-picker #mp />
+    <p>ngModel value: {{ ngModelValue?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Signal Forms</h2>
+    <mat-form-field>
+      <mat-label>Pick a date</mat-label>
+      <input matInput [ngxDtInput]="sp" [formField]="signalForm.date" />
+      <ngx-dt-toggle matSuffix [for]="sp" />
+    </mat-form-field>
+    <ngx-dt-picker #sp />
+    <p>Signal value: {{ signalForm.date().value()?.toString() ?? 'none' }}</p>
+  </section>
 </main>
 
 <router-outlet />

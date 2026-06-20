@@ -10,6 +10,7 @@ import {
   model,
   output,
   signal,
+  type Signal,
 } from '@angular/core';
 import { DateAdapter } from '@angular/material/core';
 import { MatCalendar } from '@angular/material/datepicker';
@@ -20,6 +21,20 @@ export type NgxDtPickerType = 'date';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
+
+/**
+ * Contract a text input must satisfy to own a picker's value.
+ * Kept here (not imported from the input) so the picker has no dependency on
+ * the input directive — the input imports this, not the other way around.
+ */
+export interface NgxDtPickerInput<D> {
+  /** Current model value as a signal — read reactively inside the calendar binding. */
+  readonly value: Signal<D | null>;
+  /** Called by the picker when the calendar selection changes. */
+  setValueFromPicker(date: D | null): void;
+  /** Element the overlay anchors to when the picker is opened from the input. */
+  getOverlayOrigin(): NgxDtOrigin;
+}
 
 const PICKER_POSITIONS: ConnectedPosition[] = [
   { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
@@ -66,7 +81,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
       <mat-calendar
         [startAt]="effectiveStartAt()"
         [startView]="startView()"
-        [selected]="value()"
+        [selected]="displayValue()"
         [minDate]="min()"
         [maxDate]="max()"
         [dateFilter]="dateFilter()"
@@ -108,8 +123,28 @@ export class NgxDtPicker<D = unknown> {
   private readonly _origin = signal<NgxDtOrigin | null>(null);
   protected readonly origin = this._origin.asReadonly();
 
+  private readonly _input = signal<NgxDtPickerInput<D> | null>(null);
+
+  /**
+   * Registers the text input that owns this picker's value. Idempotent for the
+   * same input; throws if a different input tries to register.
+   */
+  registerInput(input: NgxDtPickerInput<D>): void {
+    const existing = this._input();
+    if (existing && existing !== input) {
+      throw new Error('NgxDtPicker can only be associated with a single ngxDtInput.');
+    }
+    this._input.set(input);
+  }
+
+  /** Value shown by the calendar: the registered input's value, else the model value. */
+  protected readonly displayValue = computed<D | null>(() => {
+    const input = this._input();
+    return input ? input.value() : this.value();
+  });
+
   protected readonly effectiveStartAt = computed(
-    () => this.value() ?? this.startAt() ?? this.adapter.today(),
+    () => this.displayValue() ?? this.startAt() ?? this.adapter.today(),
   );
 
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
@@ -117,12 +152,15 @@ export class NgxDtPicker<D = unknown> {
     if (this.disabled() || this.inline() || this._open()) {
       return;
     }
-    if (origin) {
-      this._origin.set(origin);
-    }
-    if (!this._origin()) {
+    // Anchor precedence: an explicit origin wins; otherwise prefer the
+    // registered input (the canonical anchor for a text-field picker), falling
+    // back to any previously-set origin.
+    const anchor =
+      origin ?? this._input()?.getOverlayOrigin() ?? this._origin();
+    if (!anchor) {
       return; // overlay requires an anchor element
     }
+    this._origin.set(anchor);
     this._open.set(true);
     this.openedChange.emit(true);
     this.opened.emit();
@@ -146,7 +184,12 @@ export class NgxDtPicker<D = unknown> {
   }
 
   protected onSelectedChange(date: D | null): void {
-    this.value.set(date);
+    const input = this._input();
+    if (input) {
+      input.setValueFromPicker(date);
+    } else {
+      this.value.set(date);
+    }
     if (!this.inline()) {
       this.close();
     }
