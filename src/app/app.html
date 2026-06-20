@@ -69,6 +69,28 @@
       {{ rangeCtrl.value?.end?.toString() ?? '—' }}
     </p>
   </section>
+
+  <section>
+    <h2>Time (inline, with seconds)</h2>
+    <ngx-dt-picker
+      type="time"
+      [inline]="true"
+      [(value)]="inlineTime"
+      [showSeconds]="true"
+    />
+    <p>Selected: {{ inlineTime()?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Time (popup, Reactive Forms)</h2>
+    <mat-form-field>
+      <mat-label>Pick a time</mat-label>
+      <input matInput [ngxDtTimeInput]="tp" [formControl]="timeCtrl" />
+      <ngx-dt-toggle matSuffix [for]="tp" ariaLabel="Open time picker" />
+    </mat-form-field>
+    <ngx-dt-picker #tp type="time" [hourCycle]="12" />
+    <p>Time: {{ timeCtrl.value?.toString() ?? 'none' }}</p>
+  </section>
 </main>
 
 <router-outlet />

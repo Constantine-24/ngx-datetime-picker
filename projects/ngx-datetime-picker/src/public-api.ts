@@ -15,3 +15,6 @@ export type { NgxDtPickerRangeInput } from './lib/picker/ngx-dt-picker';
 // Re-exported for convenience so consumers can type range values without
 // importing from `@angular/material/datepicker` directly.
 export { DateRange } from '@angular/material/datepicker';
+export { NgxDtTimeAdapter } from './lib/time/ngx-dt-time-adapter';
+export { NgxDtTimePanel } from './lib/time-panel/ngx-dt-time-panel';
+export { NgxDtTimeInput } from './lib/time-input/ngx-dt-time-input';

@@ -14,4 +14,15 @@ html {
   );
 }
 
+/* Make the page surface follow the active M3 color-scheme so themed text
+   (calendar cells, time-panel controls) always has a matching background.
+   Without this, dark-scheme tokens (light text) render on the UA's default
+   white canvas → fails WCAG AA contrast. */
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
 /* You can add global styles to this file, and also import other style files */
