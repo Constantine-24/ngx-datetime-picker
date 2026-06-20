@@ -4,8 +4,9 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { DateRange } from '@angular/material/datepicker';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { NgxDtPicker, NgxDtPickerInput } from './ngx-dt-picker';
+import { NgxDtPicker, NgxDtPickerInput, NgxDtPickerRangeInput } from './ngx-dt-picker';
 
 @Component({
   imports: [NgxDtPicker],
@@ -358,5 +359,126 @@ describe('NgxDtPicker — opens anchored to the input', () => {
     expect(picker.isOpen()).toBe(true);
     expect(overlayPanel()).toBeTruthy();
     input.origin.remove();
+  });
+});
+
+// --- Plan 4: date-range engine -------------------------------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker #picker [inline]="true" type="date-range" [(range)]="range" />
+  `,
+})
+class InlineRangeHost {
+  range = signal<DateRange<Temporal.PlainDate> | null>(null);
+}
+
+function rangeCells(fixture: { nativeElement: HTMLElement }): HTMLElement[] {
+  return Array.from(
+    fixture.nativeElement.querySelectorAll<HTMLElement>('.mat-calendar-body-cell'),
+  );
+}
+
+describe('NgxDtPicker — date-range engine', () => {
+  beforeEach(setup);
+
+  it('first click sets the range start with a null end', async () => {
+    const fixture = TestBed.createComponent(InlineRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    rangeCells(fixture)[4].click(); // 5th of the active month
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const range = fixture.componentInstance.range();
+    expect(range?.start).toBeInstanceOf(Temporal.PlainDate);
+    expect(range?.end).toBeNull();
+    expect(range?.start?.day).toBe(5);
+  });
+
+  it('a second click on/after the start completes the range', async () => {
+    const fixture = TestBed.createComponent(InlineRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cells = rangeCells(fixture);
+    cells[4].click(); // start = 5th
+    fixture.detectChanges();
+    await fixture.whenStable();
+    cells[9].click(); // end = 10th
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const range = fixture.componentInstance.range()!;
+    expect(range.start?.day).toBe(5);
+    expect(range.end?.day).toBe(10);
+    expect(
+      Temporal.PlainDate.compare(range.end!, range.start!),
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  it('a click before the current start resets the start', async () => {
+    const fixture = TestBed.createComponent(InlineRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cells = rangeCells(fixture);
+    cells[9].click(); // start = 10th
+    fixture.detectChanges();
+    await fixture.whenStable();
+    cells[4].click(); // earlier than start → resets
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const range = fixture.componentInstance.range()!;
+    expect(range.start?.day).toBe(5);
+    expect(range.end).toBeNull();
+  });
+});
+
+/** Minimal fake range input implementing the picker's range contract. */
+class FakeRangeInput implements NgxDtPickerRangeInput<Temporal.PlainDate> {
+  readonly _range = signal<DateRange<Temporal.PlainDate> | null>(null);
+  readonly range = this._range.asReadonly();
+  fromPicker: DateRange<Temporal.PlainDate> | undefined;
+  readonly origin = document.createElement('div');
+  setRangeFromPicker(range: DateRange<Temporal.PlainDate>): void {
+    this.fromPicker = range;
+    this._range.set(range);
+  }
+  getOverlayOrigin(): HTMLElement {
+    return this.origin;
+  }
+}
+
+describe('NgxDtPicker — range value bridge', () => {
+  beforeEach(setup);
+
+  it('routes range selection to the registered range input, not [(range)]', async () => {
+    const fixture = TestBed.createComponent(InlineRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const input = new FakeRangeInput();
+    picker.registerRangeInput(input);
+
+    rangeCells(fixture)[4].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(input.fromPicker?.start).toBeInstanceOf(Temporal.PlainDate);
+    expect(fixture.componentInstance.range()).toBeNull();
+  });
+
+  it('throws when a second, different range input registers', () => {
+    const fixture = TestBed.createComponent(InlineRangeHost);
+    fixture.detectChanges();
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    picker.registerRangeInput(new FakeRangeInput());
+    expect(() => picker.registerRangeInput(new FakeRangeInput())).toThrow(/single/);
   });
 });

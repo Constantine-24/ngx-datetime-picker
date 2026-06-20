@@ -13,11 +13,18 @@ import {
   type Signal,
 } from '@angular/core';
 import { DateAdapter } from '@angular/material/core';
-import { MatCalendar } from '@angular/material/datepicker';
+import {
+  DateRange,
+  DefaultMatCalendarRangeStrategy,
+  MatCalendar,
+  MAT_DATE_RANGE_SELECTION_STRATEGY,
+  type MatCalendarUserEvent,
+  type MatDateRangeSelectionStrategy,
+} from '@angular/material/datepicker';
 import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
 
-/** Picker variants. Only `date` is implemented in this plan. */
-export type NgxDtPickerType = 'date';
+/** Picker variants. `date` and `date-range` are implemented. */
+export type NgxDtPickerType = 'date' | 'date-range';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
@@ -33,6 +40,19 @@ export interface NgxDtPickerInput<D> {
   /** Called by the picker when the calendar selection changes. */
   setValueFromPicker(date: D | null): void;
   /** Element the overlay anchors to when the picker is opened from the input. */
+  getOverlayOrigin(): NgxDtOrigin;
+}
+
+/**
+ * Contract a range input must satisfy to own a picker's range value.
+ * Kept here so the picker has no dependency on the range-input component.
+ */
+export interface NgxDtPickerRangeInput<D> {
+  /** Current range value as a signal — read reactively in the calendar binding. */
+  readonly range: Signal<DateRange<D> | null>;
+  /** Called by the picker when the calendar range selection changes. */
+  setRangeFromPicker(range: DateRange<D>): void;
+  /** Element the overlay anchors to when opened from the range field. */
   getOverlayOrigin(): NgxDtOrigin;
 }
 
@@ -81,19 +101,30 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
       <mat-calendar
         [startAt]="effectiveStartAt()"
         [startView]="startView()"
-        [selected]="displayValue()"
+        [selected]="calendarSelection()"
         [minDate]="min()"
         [maxDate]="max()"
         [dateFilter]="dateFilter()"
         (selectedChange)="onSelectedChange($event)"
+        (_userSelection)="onUserSelection($event)"
       />
     </ng-template>
   `,
   host: { class: 'ngx-dt-picker' },
+  providers: [
+    {
+      provide: MAT_DATE_RANGE_SELECTION_STRATEGY,
+      useClass: DefaultMatCalendarRangeStrategy,
+    },
+  ],
 })
 export class NgxDtPicker<D = unknown> {
   private readonly adapter = inject<DateAdapter<D>>(DateAdapter);
   private readonly options = inject(NGX_DT_DEFAULT_OPTIONS);
+  private readonly rangeStrategy = inject<MatDateRangeSelectionStrategy<D>>(
+    MAT_DATE_RANGE_SELECTION_STRATEGY,
+  );
+  private readonly _emptyRange = new DateRange<D>(null, null);
 
   readonly type = input<NgxDtPickerType>('date');
   readonly inline = input(false);
@@ -109,6 +140,12 @@ export class NgxDtPicker<D = unknown> {
 
   /** Two-way selected value. `model()` provides the `valueChange` output. */
   readonly value = model<D | null>(null);
+
+  /** Two-way range value (used when `type === 'date-range'`). */
+  readonly range = model<DateRange<D> | null>(null);
+
+  /** Whether the picker is in range-selection mode. */
+  readonly isRange = computed(() => this.type() === 'date-range');
 
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
@@ -143,9 +180,40 @@ export class NgxDtPicker<D = unknown> {
     return input ? input.value() : this.value();
   });
 
-  protected readonly effectiveStartAt = computed(
-    () => this.displayValue() ?? this.startAt() ?? this.adapter.today(),
-  );
+  private readonly _rangeInput = signal<NgxDtPickerRangeInput<D> | null>(null);
+
+  /**
+   * Registers the range field that owns this picker's range value. Idempotent
+   * for the same input; throws if a different one registers.
+   */
+  registerRangeInput(input: NgxDtPickerRangeInput<D>): void {
+    const existing = this._rangeInput();
+    if (existing && existing !== input) {
+      throw new Error('NgxDtPicker can only be associated with a single range input.');
+    }
+    this._rangeInput.set(input);
+  }
+
+  /** Range shown by the calendar: the registered range input's value, else the model. */
+  protected readonly rangeDisplayValue = computed<DateRange<D> | null>(() => {
+    const input = this._rangeInput();
+    return input ? input.range() : this.range();
+  });
+
+  /** What the calendar's `[selected]` binds to — a range or a single date. */
+  protected readonly calendarSelection = computed<DateRange<D> | D | null>(() => {
+    if (this.isRange()) {
+      return this.rangeDisplayValue() ?? this._emptyRange;
+    }
+    return this.displayValue();
+  });
+
+  protected readonly effectiveStartAt = computed(() => {
+    const anchor = this.isRange()
+      ? (this.rangeDisplayValue()?.start ?? null)
+      : this.displayValue();
+    return anchor ?? this.startAt() ?? this.adapter.today();
+  });
 
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
   open(origin?: NgxDtOrigin): void {
@@ -184,6 +252,9 @@ export class NgxDtPicker<D = unknown> {
   }
 
   protected onSelectedChange(date: D | null): void {
+    if (this.isRange()) {
+      return; // range selection is handled via (_userSelection)
+    }
     const input = this._input();
     if (input) {
       input.setValueFromPicker(date);
@@ -191,6 +262,23 @@ export class NgxDtPicker<D = unknown> {
       this.value.set(date);
     }
     if (!this.inline()) {
+      this.close();
+    }
+  }
+
+  protected onUserSelection(event: MatCalendarUserEvent<D | null>): void {
+    if (!this.isRange()) {
+      return; // single-date selection is handled via (selectedChange)
+    }
+    const current = this.rangeDisplayValue() ?? this._emptyRange;
+    const next = this.rangeStrategy.selectionFinished(event.value, current, event.event);
+    const input = this._rangeInput();
+    if (input) {
+      input.setRangeFromPicker(next);
+    } else {
+      this.range.set(next);
+    }
+    if (!this.inline() && next.start !== null && next.end !== null) {
       this.close();
     }
   }
