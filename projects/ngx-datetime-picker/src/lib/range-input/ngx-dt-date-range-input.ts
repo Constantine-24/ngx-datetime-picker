@@ -134,13 +134,19 @@ export class NgxDtDateRangeInput<D = unknown>
 
   _setStart(date: D | null, valid: boolean): void {
     this._startValid = valid;
-    this._start.set(date);
-    this._commit();
+    if (!this.adapter.sameDate(date, this._start())) {
+      this._start.set(date);
+      this._emitChange();
+    }
+    this._onValidatorChange();
   }
   _setEnd(date: D | null, valid: boolean): void {
     this._endValid = valid;
-    this._end.set(date);
-    this._commit();
+    if (!this.adapter.sameDate(date, this._end())) {
+      this._end.set(date);
+      this._emitChange();
+    }
+    this._onValidatorChange();
   }
   _markTouched(): void {
     this._onTouched();
@@ -149,11 +155,10 @@ export class NgxDtDateRangeInput<D = unknown>
     this.picker().open(this.elementRef);
   }
 
-  private _commit(): void {
+  private _emitChange(): void {
     const range = this.range();
     this._onChange(range);
     this.rangeChange.emit(range);
-    this._onValidatorChange();
   }
 
   // --- ControlValueAccessor -------------------------------------------------

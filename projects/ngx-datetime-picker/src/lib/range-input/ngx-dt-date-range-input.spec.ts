@@ -104,6 +104,29 @@ describe('NgxDtDateRangeInput — text I/O', () => {
     expect(start.disabled).toBe(true);
     expect(end.disabled).toBe(true);
   });
+
+  it('does not re-emit the value when an invalid keystroke leaves it unchanged', async () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const directive = fixture.debugElement
+      .query((de) => de.componentInstance instanceof NgxDtDateRangeInput)
+      .componentInstance as NgxDtDateRangeInput<Temporal.PlainDate>;
+    const emissions: DateRange<Temporal.PlainDate>[] = [];
+    directive.rangeChange.subscribe((range) => emissions.push(range));
+
+    const { start } = inputs(fixture);
+    type(start, 'garbage');
+    type(start, 'still garbage');
+    fixture.detectChanges();
+
+    // Both keystrokes parse to null, which equals the initial null start — no
+    // value transition, so the committed range value is never re-emitted.
+    expect(emissions.length).toBe(0);
+    // Validator notifications still fire, so the parse error surfaces.
+    expect(fixture.componentInstance.ctrl.hasError('ngxDtRangeStart')).toBe(true);
+  });
 });
 
 describe('NgxDtDateRangeInput — picker bridge', () => {
