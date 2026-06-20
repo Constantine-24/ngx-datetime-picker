@@ -1,6 +1,7 @@
 import {
   Directive,
   ElementRef,
+  effect,
   type OnInit,
   forwardRef,
   inject,
@@ -8,7 +9,14 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  type AbstractControl,
+  type ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  type ValidationErrors,
+  type Validator,
+} from '@angular/forms';
 import {
   DateAdapter,
   MAT_DATE_FORMATS,
@@ -38,10 +46,11 @@ import {
   },
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NgxDtInput), multi: true },
+    { provide: NG_VALIDATORS, useExisting: forwardRef(() => NgxDtInput), multi: true },
   ],
 })
 export class NgxDtInput<D = unknown>
-  implements ControlValueAccessor, OnInit, NgxDtPickerInput<D>
+  implements ControlValueAccessor, Validator, OnInit, NgxDtPickerInput<D>
 {
   private readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   private readonly adapter = inject<DateAdapter<D>>(DateAdapter);
@@ -64,6 +73,18 @@ export class NgxDtInput<D = unknown>
 
   protected _onChange: (value: D | null) => void = () => {};
   protected _onTouched: () => void = () => {};
+  protected _onValidatorChange: () => void = () => {};
+
+  constructor() {
+    // The picker holds min/max/dateFilter; re-run validation when they change.
+    effect(() => {
+      const picker = this.picker();
+      picker.min();
+      picker.max();
+      picker.dateFilter();
+      this._onValidatorChange();
+    });
+  }
 
   ngOnInit(): void {
     this.picker().registerInput(this);
@@ -90,6 +111,35 @@ export class NgxDtInput<D = unknown>
     this._disabled.set(isDisabled);
   }
 
+  // --- Validator ------------------------------------------------------------
+
+  validate(control: AbstractControl): ValidationErrors | null {
+    if (!this._lastValueValid) {
+      return { ngxDtParse: { text: this.elementRef.nativeElement.value } };
+    }
+    const value = this.adapter.getValidDateOrNull(this.adapter.deserialize(control.value));
+    if (value === null) {
+      return null;
+    }
+    const picker = this.picker();
+    const min = picker.min();
+    if (min && this.adapter.compareDate(min, value) > 0) {
+      return { ngxDtMin: { min, actual: value } };
+    }
+    const max = picker.max();
+    if (max && this.adapter.compareDate(max, value) < 0) {
+      return { ngxDtMax: { max, actual: value } };
+    }
+    if (!picker.dateFilter()(value)) {
+      return { ngxDtFilter: true };
+    }
+    return null;
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this._onValidatorChange = fn;
+  }
+
   // --- NgxDtPickerInput (picker -> input) -----------------------------------
 
   setValueFromPicker(date: D | null): void {
@@ -102,6 +152,7 @@ export class NgxDtInput<D = unknown>
       this.dateChange.emit(value);
     }
     this._onTouched();
+    this._onValidatorChange();
   }
 
   getOverlayOrigin(): NgxDtOrigin {
@@ -120,6 +171,7 @@ export class NgxDtInput<D = unknown>
       this._onChange(date);
       this.dateChange.emit(date);
     }
+    this._onValidatorChange();
   }
 
   protected _onBlur(): void {
@@ -129,8 +181,11 @@ export class NgxDtInput<D = unknown>
     this._onTouched();
   }
 
-  protected _onKeydown(_event: KeyboardEvent): void {
-    // Keyboard-open is added in Task 3.
+  protected _onKeydown(event: KeyboardEvent): void {
+    if (event.altKey && event.key === 'ArrowDown' && !this._disabled()) {
+      this.picker().open(this.elementRef);
+      event.preventDefault();
+    }
   }
 
   private _formatToInput(date: D | null): void {
