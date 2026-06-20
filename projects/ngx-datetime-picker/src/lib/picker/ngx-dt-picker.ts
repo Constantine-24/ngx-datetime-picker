@@ -221,10 +221,14 @@ export class NgxDtPicker<D = unknown> {
       return;
     }
     // Anchor precedence: an explicit origin wins; otherwise prefer the
-    // registered input (the canonical anchor for a text-field picker), falling
-    // back to any previously-set origin.
+    // registered single-date input, then the registered range input (the
+    // canonical anchors for a text-field picker), falling back to any
+    // previously-set origin.
     const anchor =
-      origin ?? this._input()?.getOverlayOrigin() ?? this._origin();
+      origin ??
+      this._input()?.getOverlayOrigin() ??
+      this._rangeInput()?.getOverlayOrigin() ??
+      this._origin();
     if (!anchor) {
       return; // overlay requires an anchor element
     }
