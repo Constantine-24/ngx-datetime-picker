@@ -5,7 +5,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { RouterOutlet } from '@angular/router';
 import { Temporal } from 'temporal-polyfill';
-import { NgxDtInput, NgxDtPicker, NgxDtToggle } from 'ngx-datetime-picker';
+import {
+  DateRange,
+  NgxDtDateRangeInput,
+  NgxDtEndDate,
+  NgxDtInput,
+  NgxDtPicker,
+  NgxDtStartDate,
+  NgxDtToggle,
+} from 'ngx-datetime-picker';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +27,9 @@ import { NgxDtInput, NgxDtPicker, NgxDtToggle } from 'ngx-datetime-picker';
     NgxDtPicker,
     NgxDtToggle,
     NgxDtInput,
+    NgxDtDateRangeInput,
+    NgxDtStartDate,
+    NgxDtEndDate,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -30,6 +41,9 @@ export class App {
 
   // Reactive Forms
   protected readonly reactiveCtrl = new FormControl<Temporal.PlainDate | null>(null);
+
+  // Date range (Reactive Forms)
+  protected readonly rangeCtrl = new FormControl<DateRange<Temporal.PlainDate> | null>(null);
 
   // ngModel
   protected ngModelValue: Temporal.PlainDate | null = null;

@@ -6,3 +6,12 @@ export type { NgxDtPickerType, NgxDtOrigin } from './lib/picker/ngx-dt-picker';
 export { NgxDtToggle } from './lib/toggle/ngx-dt-toggle';
 export { NgxDtInput } from './lib/input/ngx-dt-input';
 export type { NgxDtPickerInput } from './lib/picker/ngx-dt-picker';
+export {
+  NgxDtDateRangeInput,
+  NgxDtStartDate,
+  NgxDtEndDate,
+} from './lib/range-input/ngx-dt-date-range-input';
+export type { NgxDtPickerRangeInput } from './lib/picker/ngx-dt-picker';
+// Re-exported for convenience so consumers can type range values without
+// importing from `@angular/material/datepicker` directly.
+export { DateRange } from '@angular/material/datepicker';
