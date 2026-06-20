@@ -73,6 +73,37 @@
           "builder": "@angular/build:unit-test"
         }
       }
+    },
+    "ngx-datetime-picker": {
+      "projectType": "library",
+      "root": "projects/ngx-datetime-picker",
+      "sourceRoot": "projects/ngx-datetime-picker/src",
+      "prefix": "ngx-dt",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-datetime-picker/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-datetime-picker/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/ngx-datetime-picker/tsconfig.spec.json",
+            "buildTarget": "ngx-datetime-picker:build",
+            "include": [
+              "**/*.spec.ts",
+              "../temporal/src/**/*.spec.ts"
+            ]
+          }
+        }
+      }
     }
   }
 }
