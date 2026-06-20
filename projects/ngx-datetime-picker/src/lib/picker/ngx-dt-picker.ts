@@ -4,6 +4,7 @@ import { OverlayModule, type ConnectedPosition } from '@angular/cdk/overlay';
 import {
   Component,
   ElementRef,
+  Injector,
   computed,
   inject,
   input,
@@ -22,9 +23,10 @@ import {
   type MatDateRangeSelectionStrategy,
 } from '@angular/material/datepicker';
 import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
+import { NgxDtTimePanel } from '../time-panel/ngx-dt-time-panel';
 
-/** Picker variants. `date` and `date-range` are implemented. */
-export type NgxDtPickerType = 'date' | 'date-range';
+/** Picker variants. `date`, `date-range`, and `time` are implemented. */
+export type NgxDtPickerType = 'date' | 'date-range' | 'time';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
@@ -66,7 +68,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
 @Component({
   selector: 'ngx-dt-picker',
   exportAs: 'ngxDtPicker',
-  imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar],
+  imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar, NgxDtTimePanel],
   template: `
     @if (inline()) {
       <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()">
@@ -98,16 +100,30 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
     }
 
     <ng-template #panel>
-      <mat-calendar
-        [startAt]="effectiveStartAt()"
-        [startView]="startView()"
-        [selected]="calendarSelection()"
-        [minDate]="min()"
-        [maxDate]="max()"
-        [dateFilter]="dateFilter()"
-        (selectedChange)="onSelectedChange($event)"
-        (_userSelection)="onUserSelection($event)"
-      />
+      @if (isTime()) {
+        <ngx-dt-time-panel
+          [value]="displayValue()"
+          (valueChange)="onTimeChange($event)"
+          [min]="min()"
+          [max]="max()"
+          [hourCycle]="hourCycle()"
+          [minuteStep]="minuteStep()"
+          [showSeconds]="showSeconds()"
+          [disabled]="disabled()"
+          [ariaLabel]="ariaLabel()"
+        />
+      } @else {
+        <mat-calendar
+          [startAt]="effectiveStartAt()"
+          [startView]="startView()"
+          [selected]="calendarSelection()"
+          [minDate]="min()"
+          [maxDate]="max()"
+          [dateFilter]="dateFilter()"
+          (selectedChange)="onSelectedChange($event)"
+          (_userSelection)="onUserSelection($event)"
+        />
+      }
     </ng-template>
   `,
   host: { class: 'ngx-dt-picker' },
@@ -119,11 +135,9 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   ],
 })
 export class NgxDtPicker<D = unknown> {
-  private readonly adapter = inject<DateAdapter<D>>(DateAdapter);
+  private readonly adapter = inject<DateAdapter<D>>(DateAdapter, { optional: true });
+  private readonly injector = inject(Injector);
   private readonly options = inject(NGX_DT_DEFAULT_OPTIONS);
-  private readonly rangeStrategy = inject<MatDateRangeSelectionStrategy<D>>(
-    MAT_DATE_RANGE_SELECTION_STRATEGY,
-  );
   private readonly _emptyRange = new DateRange<D>(null, null);
 
   readonly type = input<NgxDtPickerType>('date');
@@ -146,6 +160,12 @@ export class NgxDtPicker<D = unknown> {
 
   /** Whether the picker is in range-selection mode. */
   readonly isRange = computed(() => this.type() === 'date-range');
+
+  readonly hourCycle = input<12 | 24 | null>(null);
+  readonly minuteStep = input(1);
+  readonly showSeconds = input(false);
+
+  readonly isTime = computed(() => this.type() === 'time');
 
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
@@ -209,10 +229,14 @@ export class NgxDtPicker<D = unknown> {
   });
 
   protected readonly effectiveStartAt = computed(() => {
+    const adapter = this.adapter;
+    if (!adapter) {
+      return null;
+    }
     const anchor = this.isRange()
       ? (this.rangeDisplayValue()?.start ?? null)
       : this.displayValue();
-    return anchor ?? this.startAt() ?? this.adapter.today();
+    return anchor ?? this.startAt() ?? adapter.today();
   });
 
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
@@ -274,8 +298,11 @@ export class NgxDtPicker<D = unknown> {
     if (!this.isRange()) {
       return; // single-date selection is handled via (selectedChange)
     }
+    const strategy = this.injector.get<MatDateRangeSelectionStrategy<D>>(
+      MAT_DATE_RANGE_SELECTION_STRATEGY,
+    );
     const current = this.rangeDisplayValue() ?? this._emptyRange;
-    const next = this.rangeStrategy.selectionFinished(event.value, current, event.event);
+    const next = strategy.selectionFinished(event.value, current, event.event);
     const input = this._rangeInput();
     if (input) {
       input.setRangeFromPicker(next);
@@ -285,6 +312,16 @@ export class NgxDtPicker<D = unknown> {
     if (!this.inline() && next.start !== null && next.end !== null) {
       this.close();
     }
+  }
+
+  protected onTimeChange(time: D | null): void {
+    const input = this._input();
+    if (input) {
+      input.setValueFromPicker(time);
+    } else {
+      this.value.set(time);
+    }
+    // Time editing is continuous — never auto-close.
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {
