@@ -4,6 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 import { DateRange } from '@angular/material/datepicker';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker, NgxDtPickerInput, NgxDtPickerRangeInput } from './ngx-dt-picker';
@@ -501,5 +502,57 @@ describe('NgxDtPicker — range opens anchored to the input', () => {
     expect(picker.isOpen()).toBe(true);
     expect(overlayPanel()).toBeTruthy();
     input.origin.remove();
+  });
+});
+
+// --- Plan 5: time picker integration -------------------------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      #picker
+      type="time"
+      [inline]="true"
+      [(value)]="value"
+    />
+  `,
+})
+class InlineTimeHost {
+  value = signal<Temporal.PlainTime | null>(null);
+}
+
+describe('NgxDtPicker — time mode', () => {
+  function setupTime() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalTimeAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupTime);
+
+  it('renders the time panel (not a calendar) inline with only a time adapter', async () => {
+    const fixture = TestBed.createComponent(InlineTimeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('ngx-dt-time-panel')).toBeTruthy();
+    expect(root.querySelector('mat-calendar')).toBeNull();
+  });
+
+  it('writes the stepped time back through [(value)] without auto-closing', async () => {
+    const fixture = TestBed.createComponent(InlineTimeHost);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('[data-testid="up-hour"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.hour).toBe(10);
   });
 });
