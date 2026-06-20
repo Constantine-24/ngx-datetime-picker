@@ -1,10 +1,20 @@
+import { TestBed } from '@angular/core/testing';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { NgxDtTimeAdapter } from 'ngx-datetime-picker';
 import { describe, expect, it } from 'vitest';
 import { Temporal } from 'temporal-polyfill';
 import { TemporalTimeAdapter } from './temporal-time-adapter';
+import { provideTemporalTimeAdapter } from './provide-temporal-time-adapter';
 
-function adapter(): TemporalTimeAdapter {
-  // No DI: MAT_DATE_LOCALE is optional, defaults to 'en-US'.
-  return new TemporalTimeAdapter();
+function adapter(locale = 'en-US'): TemporalTimeAdapter {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    providers: [
+      provideTemporalTimeAdapter(),
+      { provide: MAT_DATE_LOCALE, useValue: locale },
+    ],
+  });
+  return TestBed.inject(NgxDtTimeAdapter) as TemporalTimeAdapter;
 }
 
 describe('TemporalTimeAdapter', () => {
