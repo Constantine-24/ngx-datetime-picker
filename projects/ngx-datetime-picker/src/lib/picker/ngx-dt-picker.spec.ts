@@ -207,3 +207,54 @@ describe('NgxDtPicker — overlay a11y', () => {
     expect(panel.getAttribute('aria-modal')).toBe('true');
   });
 });
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      [inline]="true"
+      [(value)]="value"
+      [min]="min"
+      [max]="max"
+      [dateFilter]="filter"
+    />
+  `,
+})
+class ConstrainedHost {
+  value = signal<Temporal.PlainDate | null>(
+    Temporal.PlainDate.from('2026-06-15'),
+  );
+  min = Temporal.PlainDate.from('2026-06-10');
+  max = Temporal.PlainDate.from('2026-06-20');
+  // disallow the 12th
+  filter = (d: Temporal.PlainDate) => d.day !== 12;
+}
+
+describe('NgxDtPicker — constraints', () => {
+  beforeEach(setup);
+
+  it('disables out-of-range and filtered days', async () => {
+    const fixture = TestBed.createComponent(ConstrainedHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const labelOf = (sel: string) =>
+      Array.from(
+        root.querySelectorAll<HTMLButtonElement>('.mat-calendar-body-cell'),
+      ).find((b) => b.getAttribute('aria-label')?.includes(sel));
+
+    // June 5 is before min → disabled
+    const june5 = labelOf('June 5, 2026');
+    expect(june5?.getAttribute('aria-disabled')).toBe('true');
+    // June 12 filtered out → disabled
+    const june12 = labelOf('June 12, 2026');
+    expect(june12?.getAttribute('aria-disabled')).toBe('true');
+    // June 15 allowed → enabled. In Material v22 the body cell binds
+    // `[attr.aria-disabled]="!item.enabled || null"`, so an enabled cell omits
+    // the attribute (null) rather than setting it to "false".
+    const june15 = labelOf('June 15, 2026');
+    expect(june15).toBeTruthy();
+    expect(june15?.getAttribute('aria-disabled')).toBeNull();
+  });
+});
