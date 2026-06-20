@@ -1,7 +1,18 @@
 <main class="demo">
-  <h1>ngx-datetime-picker — Temporal adapter smoke test</h1>
-  <mat-calendar [selected]="selected()" (selectedChange)="onSelected($event)" />
-  <p>Selected: {{ selected()?.toString() ?? 'none' }}</p>
+  <h1>ngx-datetime-picker — date picker</h1>
+
+  <section>
+    <h2>Inline</h2>
+    <ngx-dt-picker [inline]="true" [(value)]="inlineValue" />
+    <p>Selected: {{ inlineValue()?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Popup (toggle)</h2>
+    <ngx-dt-toggle [for]="popup" />
+    <ngx-dt-picker #popup="ngxDtPicker" [(value)]="popupValue" />
+    <p>Selected: {{ popupValue()?.toString() ?? 'none' }}</p>
+  </section>
 </main>
 
 <router-outlet />
