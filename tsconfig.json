@@ -7,6 +7,10 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "ngx-datetime-picker": ["./dist/ngx-datetime-picker"],
+      "ngx-datetime-picker/temporal": ["./projects/ngx-datetime-picker/temporal/src/public-api.ts"]
+    },
     "skipLibCheck": true,
     "isolatedModules": true,
     "experimentalDecorators": true,
@@ -26,6 +30,12 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/ngx-datetime-picker/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/ngx-datetime-picker/tsconfig.spec.json"
     }
   ]
 }
