@@ -683,6 +683,15 @@ import {
 } from '@angular/forms';
 ```
 
+Re-add the `NG_VALIDATORS` provider to the `@Directive` `providers` array (it was deliberately deferred from Task 2 — registering as a validator without a `validate()` method makes Angular call the instance as a `ValidatorFn` and crash in any form). The array becomes:
+
+```ts
+  providers: [
+    { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NgxDtInput), multi: true },
+    { provide: NG_VALIDATORS, useExisting: forwardRef(() => NgxDtInput), multi: true },
+  ],
+```
+
 Update the class declaration:
 
 ```ts
