@@ -167,3 +167,43 @@ describe('NgxDtPicker — overlay', () => {
     expect(overlayPanel()).toBeNull();
   });
 });
+
+describe('NgxDtPicker — overlay a11y', () => {
+  beforeEach(setup);
+
+  it('closes on Escape and restores focus to the trigger', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    const trigger = fixture.componentInstance.trigger().nativeElement;
+    trigger.focus();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const panel = overlayPanel()!;
+    panel.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picker().isOpen()).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('renders role="dialog" with aria-modal on the overlay panel', async () => {
+    const fixture = TestBed.createComponent(OverlayHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(
+      fixture.componentInstance.trigger(),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const panel = overlayPanel()!;
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.getAttribute('aria-modal')).toBe('true');
+  });
+});
