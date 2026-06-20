@@ -299,4 +299,15 @@ describe('NgxDtTimePanel — 12h cycle', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-testid="meridiem-am"]')).toBeNull();
   });
+
+  it('reports aria-valuenow as the 12h hour within [valuemin, valuemax]', async () => {
+    const fixture = TestBed.createComponent(Host12);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('13:30'));
+    fixture.componentInstance.hourCycle.set(12);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const hour = root.querySelector<HTMLInputElement>('input[role="spinbutton"]')!;
+    expect(hour.getAttribute('aria-valuenow')).toBe('1');
+  });
 });
