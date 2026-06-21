@@ -8,6 +8,8 @@ import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 import { DateRange } from '@angular/material/datepicker';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker, NgxDtPickerInput, NgxDtPickerRangeInput } from './ngx-dt-picker';
+import { Directionality, type Direction } from '@angular/cdk/bidi';
+import { Subject } from 'rxjs';
 
 @Component({
   imports: [NgxDtPicker],
@@ -1399,5 +1401,26 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     expect(
       (inline.nativeElement as HTMLElement).querySelector('[data-testid="dt-done"]'),
     ).toBeNull();
+  });
+});
+
+// --- Plan 8 (Task 7): RTL support -----------------------------------------
+
+describe('NgxDtPicker — RTL support', () => {
+  it('reflects the ambient direction on the panel (RTL)', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+        { provide: Directionality, useValue: { value: 'rtl', change: new Subject<Direction>() } },
+      ],
+    });
+    // Host: <ngx-dt-picker [inline]="true" />
+    const fixture = TestBed.createComponent(InlineHost);
+    await fixture.whenStable();
+    const panel = fixture.nativeElement.querySelector('.ngx-dt-panel') as HTMLElement;
+    expect(panel.getAttribute('dir')).toBe('rtl');
   });
 });

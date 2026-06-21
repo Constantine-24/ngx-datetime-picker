@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
+import { Directionality } from '@angular/cdk/bidi';
 import { OverlayModule, type ConnectedPosition } from '@angular/cdk/overlay';
 import {
   Component,
@@ -13,6 +14,7 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateAdapter } from '@angular/material/core';
 import {
   DateRange,
@@ -78,7 +80,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar, NgxDtTimePanel],
   template: `
     @if (inline()) {
-      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()">
+      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()" [attr.dir]="direction()">
         <ng-container [ngTemplateOutlet]="panel" />
       </div>
     } @else if (origin(); as originEl) {
@@ -98,6 +100,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           role="dialog"
           aria-modal="true"
           [attr.aria-label]="ariaLabel()"
+          [attr.dir]="direction()"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
         >
@@ -387,6 +390,16 @@ export class NgxDtPicker<D = unknown> {
   private readonly injector = inject(Injector);
   private readonly options = inject(NGX_DT_DEFAULT_OPTIONS);
   private readonly _emptyRange = new DateRange<D>(null, null);
+
+  private readonly dir = inject(Directionality, { optional: true });
+  private readonly _direction = signal<'ltr' | 'rtl'>(this.dir?.value ?? 'ltr');
+  protected readonly direction = this._direction.asReadonly();
+
+  constructor() {
+    this.dir?.change
+      .pipe(takeUntilDestroyed())
+      .subscribe((value) => this._direction.set(value));
+  }
 
   readonly type = input<NgxDtPickerType>('date');
   readonly inline = input(false);
