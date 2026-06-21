@@ -8,6 +8,7 @@ import { Temporal } from 'temporal-polyfill';
 import {
   DateRange,
   NgxDtDateRangeInput,
+  NgxDtDateTimeInput,
   NgxDtEndDate,
   NgxDtInput,
   NgxDtPicker,
@@ -32,6 +33,7 @@ import {
     NgxDtStartDate,
     NgxDtEndDate,
     NgxDtTimeInput,
+    NgxDtDateTimeInput,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -57,4 +59,8 @@ export class App {
   // Time picker
   protected readonly inlineTime = signal<Temporal.PlainTime | null>(null);
   protected readonly timeCtrl = new FormControl<Temporal.PlainTime | null>(null);
+
+  // Datetime picker
+  protected readonly inlineDateTime = signal<Temporal.PlainDateTime | null>(null);
+  protected readonly dateTimeCtrl = new FormControl<Temporal.PlainDateTime | null>(null);
 }
