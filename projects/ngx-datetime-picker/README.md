@@ -279,6 +279,6 @@ Right-to-left layout is supported via CDK `Directionality`. Set `dir="rtl"` on t
 This is an Angular CLI workspace using the Vitest unit-test builder.
 
 ```bash
-ng build ngx-datetime-picker              # ng-packagr build (both entry points)
-ng test ngx-datetime-picker --watch=false # Vitest
+ng build ngx-datetime-picker          # ng-packagr build (both entry points)
+ng test ngx-datetime-picker --no-watch # Vitest (single run)
 ```
