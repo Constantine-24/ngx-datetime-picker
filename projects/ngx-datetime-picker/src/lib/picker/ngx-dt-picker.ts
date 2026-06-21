@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
+import { Directionality } from '@angular/cdk/bidi';
 import { OverlayModule, type ConnectedPosition } from '@angular/cdk/overlay';
 import {
   Component,
@@ -13,6 +14,7 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateAdapter } from '@angular/material/core';
 import {
   DateRange,
@@ -25,6 +27,7 @@ import {
 import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
 import { NgxDtTimePanel } from '../time-panel/ngx-dt-time-panel';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
+import { NgxDtEmptyCalendarHeader } from './ngx-dt-empty-calendar-header';
 
 /** Picker variants. All five are implemented. */
 export type NgxDtPickerType =
@@ -77,7 +80,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar, NgxDtTimePanel],
   template: `
     @if (inline()) {
-      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()">
+      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()" [attr.dir]="direction()">
         <ng-container [ngTemplateOutlet]="panel" />
       </div>
     } @else if (origin(); as originEl) {
@@ -97,6 +100,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           role="dialog"
           aria-modal="true"
           [attr.aria-label]="ariaLabel()"
+          [attr.dir]="direction()"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
         >
@@ -117,19 +121,64 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           [showSeconds]="showSeconds()"
           [disabled]="disabled()"
           [ariaLabel]="ariaLabel()"
+          [timeFilter]="timeFilter()"
         />
       } @else {
         <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isAnyDateTime()">
-          <mat-calendar
-            [startAt]="effectiveStartAt()"
-            [startView]="startView()"
-            [selected]="calendarSelection()"
-            [minDate]="calendarMin()"
-            [maxDate]="calendarMax()"
-            [dateFilter]="dateFilter()"
-            (selectedChange)="onSelectedChange($event)"
-            (_userSelection)="onUserSelection($event)"
-          />
+          @if (dualCalendars()) {
+            <div class="ngx-dt-calendars">
+              <div class="ngx-dt-cal-nav" role="group" aria-label="Calendar navigation">
+                <button
+                  type="button"
+                  class="ngx-dt-cal-arrow"
+                  data-testid="cal-prev"
+                  [disabled]="disabled()"
+                  aria-label="Previous month"
+                  (click)="onPrevMonth()"
+                >
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <span class="ngx-dt-cal-label">{{ monthLabel(activeMonthStart()) }}</span>
+                <span class="ngx-dt-cal-label">{{ monthLabel(activeMonthNext()) }}</span>
+                <button
+                  type="button"
+                  class="ngx-dt-cal-arrow"
+                  data-testid="cal-next"
+                  [disabled]="disabled()"
+                  aria-label="Next month"
+                  (click)="onNextMonth()"
+                >
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+              <div class="ngx-dt-calendars-row">
+                @for (m of dualMonths(); track m.key) {
+                  <mat-calendar
+                    [startAt]="m.start"
+                    [startView]="'month'"
+                    [headerComponent]="emptyHeader"
+                    [selected]="calendarSelection()"
+                    [minDate]="calendarMin()"
+                    [maxDate]="calendarMax()"
+                    [dateFilter]="dateFilter()"
+                    (selectedChange)="onSelectedChange($event)"
+                    (_userSelection)="onUserSelection($event)"
+                  />
+                }
+              </div>
+            </div>
+          } @else {
+            <mat-calendar
+              [startAt]="effectiveStartAt()"
+              [startView]="startView()"
+              [selected]="calendarSelection()"
+              [minDate]="calendarMin()"
+              [maxDate]="calendarMax()"
+              [dateFilter]="dateFilter()"
+              (selectedChange)="onSelectedChange($event)"
+              (_userSelection)="onUserSelection($event)"
+            />
+          }
           @if (isDateTime()) {
             <ngx-dt-time-panel
               [value]="timePanelValue()"
@@ -141,6 +190,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
               [showSeconds]="showSeconds()"
               [disabled]="disabled()"
               ariaLabel="Choose a time"
+              [timeFilter]="timeFilter()"
             />
           }
           @if (isDateTimeRange()) {
@@ -157,6 +207,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
                   [showSeconds]="showSeconds()"
                   [disabled]="disabled()"
                   ariaLabel="Choose a start time"
+                  [timeFilter]="timeFilter()"
                 />
               </div>
               <div class="ngx-dt-range-time">
@@ -171,31 +222,51 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
                   [showSeconds]="showSeconds()"
                   [disabled]="disabled()"
                   ariaLabel="Choose an end time"
+                  [timeFilter]="timeFilter()"
                 />
               </div>
             </div>
           }
-          @if (isAnyDateTime()) {
-            <div class="ngx-dt-actions" role="group" aria-label="Datetime actions">
-              <button
-                type="button"
-                class="ngx-dt-action"
-                data-testid="dt-now"
-                [disabled]="disabled()"
-                (click)="onNowClick()"
-              >
-                Now
-              </button>
-              <button
-                type="button"
-                class="ngx-dt-action"
-                data-testid="dt-clear"
-                [disabled]="disabled()"
-                (click)="onClearClick()"
-              >
-                Clear
-              </button>
-              @if (!inline()) {
+          @if (showFooter()) {
+            <div class="ngx-dt-actions" role="group" aria-label="Actions">
+              @if (isAnyDateTime()) {
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-now"
+                  [disabled]="disabled()"
+                  (click)="onNowClick()"
+                >
+                  Now
+                </button>
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-clear"
+                  [disabled]="disabled()"
+                  (click)="onClearClick()"
+                >
+                  Clear
+                </button>
+              }
+              @if (draftMode() && !inline()) {
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-cancel"
+                  (click)="onCancelClick()"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="ngx-dt-action ngx-dt-action-primary"
+                  data-testid="dt-apply"
+                  (click)="onApplyClick()"
+                >
+                  Apply
+                </button>
+              } @else if (isAnyDateTime() && !inline()) {
                 <button
                   type="button"
                   class="ngx-dt-action ngx-dt-action-primary"
@@ -265,6 +336,49 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         color: var(--mat-sys-on-primary, HighlightText);
         border-color: transparent;
       }
+      .ngx-dt-calendars-row {
+        display: flex;
+        gap: 8px;
+      }
+      .ngx-dt-cal-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+      }
+      .ngx-dt-cal-label {
+        flex: 1;
+        text-align: center;
+        font: var(--mat-sys-title-small, inherit);
+        color: var(--mat-sys-on-surface, inherit);
+      }
+      .ngx-dt-cal-arrow {
+        min-width: 32px;
+        min-height: 32px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--mat-sys-on-surface-variant, currentColor);
+        cursor: pointer;
+      }
+      .ngx-dt-cal-arrow:hover:not([disabled]) {
+        background: var(--mat-sys-surface-container-high, transparent);
+      }
+      .ngx-dt-cal-arrow:focus-visible {
+        outline: 2px solid var(--mat-sys-primary, Highlight);
+        outline-offset: 1px;
+      }
+      .ngx-dt-cal-arrow[disabled] {
+        opacity: 0.38;
+        cursor: default;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ngx-dt-panel,
+        .ngx-dt-panel * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
     `,
   ],
   host: { class: 'ngx-dt-picker' },
@@ -284,13 +398,28 @@ export class NgxDtPicker<D = unknown> {
   private readonly options = inject(NGX_DT_DEFAULT_OPTIONS);
   private readonly _emptyRange = new DateRange<D>(null, null);
 
+  private readonly dir = inject(Directionality, { optional: true });
+  private readonly _direction = signal<'ltr' | 'rtl'>(this.dir?.value ?? 'ltr');
+  protected readonly direction = this._direction.asReadonly();
+
+  constructor() {
+    this.dir?.change
+      .pipe(takeUntilDestroyed())
+      .subscribe((value) => this._direction.set(value));
+  }
+
   readonly type = input<NgxDtPickerType>('date');
   readonly inline = input(false);
   readonly startAt = input<D | null>(null);
   readonly startView = input<'month' | 'year' | 'multi-year'>('month');
   readonly min = input<D | null>(null);
   readonly max = input<D | null>(null);
+  /** Predicate to disable individual calendar dates. For datetime variants the argument is the date part of the datetime value. */
   readonly dateFilter = input<(date: D) => boolean>(() => true);
+  /** Show two side-by-side calendars in range modes (`1` for single calendar, `2` for dual). Ignored for non-range variants. */
+  readonly monthsToDisplay = input<1 | 2>(1);
+  /** Buffer all changes into a draft until the user confirms with Apply; Cancel discards the draft without updating the form. */
+  readonly draftMode = input(false);
   readonly disabled = input(false);
   readonly hasBackdrop = input(this.options.hasBackdrop);
   readonly restoreFocus = input(this.options.restoreFocus);
@@ -308,6 +437,8 @@ export class NgxDtPicker<D = unknown> {
   readonly hourCycle = input<12 | 24 | null>(null);
   readonly minuteStep = input(1);
   readonly showSeconds = input(false);
+  /** Predicate to disable individual time steps in the time panel. Receives a time value of type `D`. */
+  readonly timeFilter = input<(time: D) => boolean>(() => true);
 
   readonly isTime = computed(() => this.type() === 'time');
   readonly isDateTime = computed(() => this.type() === 'datetime');
@@ -323,6 +454,11 @@ export class NgxDtPicker<D = unknown> {
     () => this.isDateTime() || this.isDateTimeRange(),
   );
 
+  /** Footer renders for datetime variants (Now/Clear) and/or draft mode (Apply/Cancel). */
+  protected readonly showFooter = computed(
+    () => this.isAnyDateTime() || (this.draftMode() && !this.inline()),
+  );
+
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
   readonly closed = output<void>();
@@ -332,6 +468,10 @@ export class NgxDtPicker<D = unknown> {
   private readonly _open = signal(false);
   /** Whether the overlay is currently open. */
   readonly isOpen = this._open.asReadonly();
+
+  private readonly _draftActive = signal(false);
+  private readonly _draftValue = signal<D | null>(null);
+  private readonly _draftRange = signal<DateRange<D> | null>(null);
 
   private readonly _origin = signal<NgxDtOrigin | null>(null);
   protected readonly origin = this._origin.asReadonly();
@@ -350,8 +490,9 @@ export class NgxDtPicker<D = unknown> {
     this._input.set(input);
   }
 
-  /** Value shown by the calendar: the registered input's value, else the model value. */
+  /** Value shown by the calendar: the draft while drafting, the registered input's value, else the model value. */
   protected readonly displayValue = computed<D | null>(() => {
+    if (this._draftActive()) return this._draftValue();
     const input = this._input();
     return input ? input.value() : this.value();
   });
@@ -370,8 +511,9 @@ export class NgxDtPicker<D = unknown> {
     this._rangeInput.set(input);
   }
 
-  /** Range shown by the calendar: the registered range input's value, else the model. */
+  /** Range shown by the calendar: the draft while drafting, the registered range input's value, else the model. */
   protected readonly rangeDisplayValue = computed<DateRange<D> | null>(() => {
+    if (this._draftActive()) return this._draftRange();
     const input = this._rangeInput();
     return input ? input.range() : this.range();
   });
@@ -508,6 +650,8 @@ export class NgxDtPicker<D = unknown> {
   protected readonly startTimePanelMin = computed<D | null>(() =>
     this.boundOnDay(this.rangeDisplayValue()?.start ?? null, this.min()),
   );
+  // The time panel pre-clamps the composed value against these bounds before it
+  // emits, so a same-day start can never be stepped past the end (and vice versa).
   protected readonly startTimePanelMax = computed<D | null>(() => {
     const r = this.rangeDisplayValue();
     const start = r?.start ?? null;
@@ -552,6 +696,60 @@ export class NgxDtPicker<D = unknown> {
     return anchor ?? startAt ?? adapter.today();
   });
 
+  /** Custom header component used to hide each calendar's built-in nav. */
+  protected readonly emptyHeader = NgxDtEmptyCalendarHeader;
+
+  /** Dual months are only meaningful for the range variants. */
+  protected readonly dualCalendars = computed(
+    () => this.monthsToDisplay() === 2 && this.calendarRangeMode(),
+  );
+
+  /** Left month anchor; user navigation overrides the computed start-at. */
+  private readonly _activeMonth = signal<D | null>(null);
+  protected readonly activeMonthStart = computed<D | null>(
+    () => this._activeMonth() ?? this.effectiveStartAt(),
+  );
+  protected readonly activeMonthNext = computed<D | null>(() => {
+    const adapter = this.adapter;
+    const start = this.activeMonthStart();
+    return adapter && start ? adapter.addCalendarMonths(start, 1) : null;
+  });
+
+  /** Keyed descriptors for the two calendars; key change forces recreation. */
+  protected readonly dualMonths = computed(() => {
+    const adapter = this.adapter;
+    const start = this.activeMonthStart();
+    const next = this.activeMonthNext();
+    if (!adapter || !start || !next) return [];
+    return [
+      { key: this.monthKey(start), start },
+      { key: this.monthKey(next), start: next },
+    ];
+  });
+
+  private monthKey(d: D): string {
+    const a = this.adapter!;
+    return `${a.getYear(d)}-${a.getMonth(d)}`;
+  }
+
+  protected monthLabel(d: D | null): string {
+    const a = this.adapter;
+    if (!a || !d) return '';
+    return `${a.getMonthNames('long')[a.getMonth(d)]} ${a.getYear(d)}`;
+  }
+
+  protected onPrevMonth(): void {
+    const a = this.adapter;
+    const start = this.activeMonthStart();
+    if (a && start) this._activeMonth.set(a.addCalendarMonths(start, -1));
+  }
+
+  protected onNextMonth(): void {
+    const a = this.adapter;
+    const start = this.activeMonthStart();
+    if (a && start) this._activeMonth.set(a.addCalendarMonths(start, 1));
+  }
+
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
   open(origin?: NgxDtOrigin): void {
     if (this.disabled() || this.inline() || this._open()) {
@@ -570,6 +768,13 @@ export class NgxDtPicker<D = unknown> {
       return; // overlay requires an anchor element
     }
     this._origin.set(anchor);
+    if (this.draftMode()) {
+      this._draftValue.set(this._input() ? this._input()!.value() : this.value());
+      this._draftRange.set(
+        this._rangeInput() ? this._rangeInput()!.range() : this.range(),
+      );
+      this._draftActive.set(true);
+    }
     this._open.set(true);
     this.openedChange.emit(true);
     this.opened.emit();
@@ -580,6 +785,7 @@ export class NgxDtPicker<D = unknown> {
     if (!this._open()) {
       return;
     }
+    this._draftActive.set(false); // discard any uncommitted draft
     this._open.set(false);
     this.openedChange.emit(false);
     this.closed.emit();
@@ -592,8 +798,12 @@ export class NgxDtPicker<D = unknown> {
     this._open() ? this.close() : this.open(origin);
   }
 
-  /** Write a value through the registered input seam, else the model. */
+  /** Write a value through the registered input seam, else the model. Buffers into draft when draft is active. */
   private commitValue(value: D | null): void {
+    if (this._draftActive()) {
+      this._draftValue.set(value);
+      return;
+    }
     const input = this._input();
     if (input) {
       input.setValueFromPicker(value);
@@ -602,8 +812,12 @@ export class NgxDtPicker<D = unknown> {
     }
   }
 
-  /** Write a range through the registered range input seam, else the model. */
+  /** Write a range through the registered range input seam, else the model. Buffers into draft when draft is active. */
   private commitRange(range: DateRange<D>): void {
+    if (this._draftActive()) {
+      this._draftRange.set(range);
+      return;
+    }
     const input = this._rangeInput();
     if (input) {
       input.setRangeFromPicker(range);
@@ -627,7 +841,7 @@ export class NgxDtPicker<D = unknown> {
       return; // datetime stays open — the time still needs setting
     }
     this.commitValue(date);
-    if (!this.inline()) {
+    if (!this.inline() && !this._draftActive()) {
       this.close();
     }
   }
@@ -679,7 +893,7 @@ export class NgxDtPicker<D = unknown> {
     const current = this.rangeDisplayValue() ?? this._emptyRange;
     const next = strategy.selectionFinished(event.value, current, event.event);
     this.commitRange(next);
-    if (!this.inline() && next.start !== null && next.end !== null) {
+    if (!this.inline() && !this._draftActive() && next.start !== null && next.end !== null) {
       this.close();
     }
   }
@@ -749,6 +963,22 @@ export class NgxDtPicker<D = unknown> {
 
   protected onDoneClick(): void {
     this.close();
+  }
+
+  protected onApplyClick(): void {
+    if (this._draftActive()) {
+      this._draftActive.set(false); // deactivate first so commit writes the real sink
+      if (this.calendarRangeMode()) {
+        this.commitRange(this._draftRange() ?? this._emptyRange);
+      } else {
+        this.commitValue(this._draftValue());
+      }
+    }
+    this.close();
+  }
+
+  protected onCancelClick(): void {
+    this.close(); // close() already discards the draft
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {

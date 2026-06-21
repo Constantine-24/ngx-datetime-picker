@@ -18,6 +18,7 @@ import { NgxDtTimePanel } from './ngx-dt-time-panel';
       [max]="max()"
       [minuteStep]="minuteStep()"
       [hourCycle]="hourCycle()"
+      [timeFilter]="timeFilter()"
     />
   `,
 })
@@ -28,6 +29,7 @@ class Host {
   max = signal<Temporal.PlainTime | null>(null);
   minuteStep = signal(1);
   hourCycle = signal<12 | 24 | null>(24);
+  timeFilter = signal<(t: Temporal.PlainTime) => boolean>(() => true);
 }
 
 @Component({
@@ -207,6 +209,101 @@ describe('NgxDtTimePanel — 24h', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.value()!.minute).toBe(59);
+  });
+
+  it('ArrowUp skips a filtered minute and lands on the next allowed value', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    // Allow only minutes that are multiples of 15.
+    fixture.componentInstance.timeFilter.set((t) => t.minute % 15 === 0);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:00'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(15);
+  });
+
+  it('type-to-set rejects a filtered value and keeps the current one', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.timeFilter.set((t) => t.minute % 15 === 0);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:00'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.value = '07';
+    minute.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(0); // unchanged
+  });
+
+  it('Home sets the minute field to 0', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:37'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(0);
+  });
+
+  it('End sets the minute field to 59', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:00'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(59);
+  });
+
+  it('End sets the hour field to 23 (24h)', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:00'));
+    await fixture.whenStable();
+    const hour = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[0] as HTMLInputElement;
+    hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.hour).toBe(23);
+  });
+
+  it('PageUp advances the minute field by 5', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:00'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(5);
+  });
+
+  it('PageDown wraps the minute field below 0', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.value.set(Temporal.PlainTime.from('10:02'));
+    await fixture.whenStable();
+    const minute = fixture.nativeElement.querySelectorAll(
+      'input[role="spinbutton"]',
+    )[1] as HTMLInputElement;
+    minute.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()!.minute).toBe(57); // 2 - 5 wraps within 60
   });
 });
 

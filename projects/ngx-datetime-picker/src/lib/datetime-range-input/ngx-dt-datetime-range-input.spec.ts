@@ -28,12 +28,13 @@ import {
       <input ngxDtStartDateTime #start="ngxDtStartDateTime" />
       <input ngxDtEndDateTime #end="ngxDtEndDateTime" />
     </ngx-dt-datetime-range-input>
-    <ngx-dt-picker #picker [inline]="true" type="datetime-range" />
+    <ngx-dt-picker #picker [inline]="true" type="datetime-range" [hourCycle]="hourCycle()" />
   `,
 })
 class Host {
   readonly ctrl = new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+  readonly hourCycle = signal<12 | 24 | null>(null);
 }
 
 function setup() {
@@ -79,6 +80,7 @@ describe('NgxDtDateTimeRangeInput — text I/O', () => {
 
   it('writes a DateRange model down into both inputs (formatted)', async () => {
     const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.hourCycle.set(24);
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -127,6 +129,25 @@ describe('NgxDtDateTimeRangeInput — text I/O', () => {
 
     expect(emissions.length).toBe(0);
     expect(fixture.componentInstance.ctrl.hasError('ngxDtRangeStart')).toBe(true);
+  });
+
+  it('formats both inputs honoring the picker hourCycle (12h shows AM/PM)', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.hourCycle.set(12);
+    await fixture.whenStable();
+    const [start, end] = Array.from(
+      fixture.nativeElement.querySelectorAll('input'),
+    ) as HTMLInputElement[];
+    fixture.componentInstance.ctrl.setValue(
+      new DateRange(
+        Temporal.PlainDateTime.from('2026-06-21T09:00'),
+        Temporal.PlainDateTime.from('2026-06-21T17:30'),
+      ),
+    );
+    await fixture.whenStable();
+    expect(start.value).toMatch(/AM/i);
+    expect(end.value).toMatch(/PM/i);
   });
 });
 

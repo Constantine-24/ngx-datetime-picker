@@ -23,6 +23,8 @@ import {
   type NgxDtPickerInput,
 } from '../picker/ngx-dt-picker';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { resolveHourCycle } from '../util/hour-cycle';
 
 /**
  * Text-field directive for datetime values: parses/formats via
@@ -58,6 +60,8 @@ export class NgxDtDateTimeInput<T = unknown>
 {
   private readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   private readonly adapter = inject<NgxDtDateTimeAdapter<T>>(NgxDtDateTimeAdapter);
+  private readonly locale =
+    (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
   /** The picker this input feeds; bind a template ref: `[ngxDtDateTimeInput]="picker"`. */
   readonly picker = input.required<NgxDtPicker<T>>({ alias: 'ngxDtDateTimeInput' });
@@ -79,11 +83,12 @@ export class NgxDtDateTimeInput<T = unknown>
   protected _onValidatorChange: () => void = () => {};
 
   constructor() {
-    // The picker holds min/max; re-run validation when they change.
+    // The picker holds min/max/dateFilter; re-run validation when they change.
     effect(() => {
       const picker = this.picker();
       picker.min();
       picker.max();
+      picker.dateFilter();
       this._onValidatorChange();
     });
   }
@@ -131,6 +136,11 @@ export class NgxDtDateTimeInput<T = unknown>
     const max = picker.max();
     if (max && this.adapter.compareDateTime(max, value) < 0) {
       return { ngxDtMax: { max, actual: value } };
+    }
+    // The calendar filters dates, so evaluate the predicate on the date part.
+    const datePart = this.adapter.getDate(value) as unknown as T;
+    if (!picker.dateFilter()(datePart)) {
+      return { ngxDtFilter: true };
     }
     return null;
   }
@@ -201,6 +211,21 @@ export class NgxDtDateTimeInput<T = unknown>
 
   private _formatToInput(value: T | null): void {
     this.elementRef.nativeElement.value =
-      value && this.adapter.isValid(value) ? this.adapter.format(value) : '';
+      value && this.adapter.isValid(value)
+        ? this.adapter.format(value, this._displayOptions())
+        : '';
+  }
+
+  /** Date+time display options that honor the picker's effective hour cycle. */
+  private _displayOptions(): Intl.DateTimeFormatOptions {
+    const cycle = resolveHourCycle(this.picker().hourCycle(), this.locale);
+    return {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: cycle === 12,
+    };
   }
 }

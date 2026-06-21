@@ -30,6 +30,37 @@ import { NgxDtPicker } from '../picker/ngx-dt-picker';
       </ng-content>
     </button>
   `,
+  styles: [
+    `
+      .ngx-dt-toggle-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--mat-sys-on-surface-variant, currentColor);
+        cursor: pointer;
+      }
+      .ngx-dt-toggle-button:hover:not([disabled]) {
+        background: var(--mat-sys-surface-container-high, transparent);
+      }
+      .ngx-dt-toggle-button:focus-visible {
+        outline: 2px solid var(--mat-sys-primary, Highlight);
+        outline-offset: 2px;
+      }
+      .ngx-dt-toggle-button[disabled] {
+        opacity: 0.38;
+        cursor: default;
+      }
+      .ngx-dt-toggle-icon {
+        display: block;
+      }
+    `,
+  ],
   host: { class: 'ngx-dt-toggle' },
 })
 export class NgxDtToggle {
