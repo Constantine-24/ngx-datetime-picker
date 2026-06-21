@@ -34,8 +34,8 @@ class Host {
 })
 class HostWithFilter {
   picker = viewChild.required(NgxDtPicker);
-  ctrl = new FormControl<Temporal.PlainDate | null>(null);
-  dateFilter = signal<(d: Temporal.PlainDate) => boolean>(() => true);
+  ctrl = new FormControl<Temporal.PlainDateTime | null>(null);
+  dateFilter = signal<(d: Temporal.PlainDateTime) => boolean>(() => true);
 }
 
 function setup() {
@@ -155,7 +155,7 @@ describe('NgxDtDateTimeInput', () => {
     const fixture = TestBed.createComponent(HostWithFilter);
     // Disallow 2026-06-21 specifically (compare the date part).
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d, Temporal.PlainDate.from('2026-06-21')) !== 0,
+      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-21')) !== 0,
     );
     await fixture.whenStable();
     const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;
@@ -169,7 +169,7 @@ describe('NgxDtDateTimeInput', () => {
     setup();
     const fixture = TestBed.createComponent(HostWithFilter);
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d, Temporal.PlainDate.from('2026-06-21')) !== 0,
+      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-21')) !== 0,
     );
     await fixture.whenStable();
     const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;
