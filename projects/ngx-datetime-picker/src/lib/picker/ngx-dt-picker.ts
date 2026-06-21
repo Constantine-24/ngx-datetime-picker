@@ -290,12 +290,26 @@ export class NgxDtPicker<D = unknown> {
     return this.displayValue();
   });
 
-  // Replaced with boundary-aware logic in Task 4.
+  /**
+   * Time-panel floor: the min's time, but only on the min's day. On any later
+   * day there is no time floor. In pure-time mode the picker `min` is itself a
+   * time. (`max` is symmetric.)
+   */
+  private boundaryTime(bound: D | null): D | null {
+    if (!this.isDateTime()) return null;
+    const dt = this.dtAdapter;
+    const v = this.displayValue();
+    if (!dt || bound == null || v == null || !dt.isValid(bound) || !dt.isValid(v)) {
+      return null;
+    }
+    return dt.compareDate(v, bound) === 0 ? (dt.getTime(bound) as unknown as D) : null;
+  }
+
   protected readonly timePanelMin = computed<D | null>(() =>
-    this.isTime() ? this.min() : null,
+    this.isTime() ? this.min() : this.boundaryTime(this.min()),
   );
   protected readonly timePanelMax = computed<D | null>(() =>
-    this.isTime() ? this.max() : null,
+    this.isTime() ? this.max() : this.boundaryTime(this.max()),
   );
 
   protected readonly effectiveStartAt = computed(() => {
