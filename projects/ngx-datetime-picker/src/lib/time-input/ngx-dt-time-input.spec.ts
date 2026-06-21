@@ -14,7 +14,7 @@ import { NgxDtTimeInput } from './ngx-dt-time-input';
   imports: [NgxDtPicker, NgxDtTimeInput, ReactiveFormsModule],
   template: `
     <input [ngxDtTimeInput]="picker" [formControl]="ctrl" />
-    <ngx-dt-picker #picker type="time" [min]="min()" [max]="max()" />
+    <ngx-dt-picker #picker type="time" [min]="min()" [max]="max()" [hourCycle]="hourCycle()" />
   `,
 })
 class Host {
@@ -22,6 +22,7 @@ class Host {
   ctrl = new FormControl<Temporal.PlainTime | null>(null);
   min = signal<Temporal.PlainTime | null>(null);
   max = signal<Temporal.PlainTime | null>(null);
+  hourCycle = signal<12 | 24 | null>(null);
 }
 
 function setup() {
@@ -117,5 +118,29 @@ describe('NgxDtTimeInput', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+
+  it('formats the field in 12h when the picker hourCycle is 12', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.hourCycle.set(12);
+    await fixture.whenStable();
+    const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    fixture.componentInstance.ctrl.setValue(Temporal.PlainTime.from('14:30'));
+    await fixture.whenStable();
+    expect(el.value).toMatch(/PM/i);
+    expect(el.value).toContain('2:30');
+  });
+
+  it('formats the field in 24h when the picker hourCycle is 24', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.hourCycle.set(24);
+    await fixture.whenStable();
+    const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    fixture.componentInstance.ctrl.setValue(Temporal.PlainTime.from('14:30'));
+    await fixture.whenStable();
+    expect(el.value).toContain('14:30');
+    expect(el.value).not.toMatch(/PM/i);
   });
 });

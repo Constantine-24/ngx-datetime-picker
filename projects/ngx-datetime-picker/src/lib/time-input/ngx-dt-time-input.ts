@@ -23,6 +23,8 @@ import {
   type NgxDtPickerInput,
 } from '../picker/ngx-dt-picker';
 import { NgxDtTimeAdapter } from '../time/ngx-dt-time-adapter';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { resolveHourCycle } from '../util/hour-cycle';
 
 /**
  * Text-field directive for time values: parses/formats via `NgxDtTimeAdapter`,
@@ -57,6 +59,8 @@ export class NgxDtTimeInput<T = unknown>
 {
   private readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   private readonly adapter = inject<NgxDtTimeAdapter<T>>(NgxDtTimeAdapter);
+  private readonly locale =
+    (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
   /** The picker this input feeds; bind a template ref: `[ngxDtTimeInput]="picker"`. */
   readonly picker = input.required<NgxDtPicker<T>>({ alias: 'ngxDtTimeInput' });
@@ -200,6 +204,14 @@ export class NgxDtTimeInput<T = unknown>
 
   private _formatToInput(time: T | null): void {
     this.elementRef.nativeElement.value =
-      time && this.adapter.isValid(time) ? this.adapter.format(time) : '';
+      time && this.adapter.isValid(time)
+        ? this.adapter.format(time, this._displayOptions())
+        : '';
+  }
+
+  /** Display options that honor the picker's effective hour cycle. */
+  private _displayOptions(): Intl.DateTimeFormatOptions {
+    const cycle = resolveHourCycle(this.picker().hourCycle(), this.locale);
+    return { hour: '2-digit', minute: '2-digit', hour12: cycle === 12 };
   }
 }
