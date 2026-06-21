@@ -105,11 +105,12 @@ export class NgxDtDateTimeRangeInput<T = unknown>
   private _onValidatorChange: () => void = () => {};
 
   constructor() {
-    // The picker holds min/max; re-validate when they change.
+    // The picker holds min/max/dateFilter; re-validate when they change.
     effect(() => {
       const picker = this.picker();
       picker.min();
       picker.max();
+      picker.dateFilter();
       this._onValidatorChange();
     });
   }
@@ -209,6 +210,13 @@ export class NgxDtDateTimeRangeInput<T = unknown>
       if (max && this.adapter.compareDateTime(max, dt) < 0) {
         return { ngxDtMax: { max, actual: dt } };
       }
+    }
+    const filter = picker.dateFilter();
+    if (start !== null && !filter(this.adapter.getDate(start) as unknown as T)) {
+      return { ngxDtFilter: true };
+    }
+    if (end !== null && !filter(this.adapter.getDate(end) as unknown as T)) {
+      return { ngxDtFilter: true };
     }
     if (
       start !== null &&

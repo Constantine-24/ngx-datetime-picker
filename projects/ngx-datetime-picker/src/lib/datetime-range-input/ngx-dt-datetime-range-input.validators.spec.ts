@@ -53,6 +53,32 @@ class ValidatedHost {
   max = Temporal.PlainDateTime.from('2026-06-20T20:00');
 }
 
+@Component({
+  imports: [
+    NgxDtDateTimeRangeInput,
+    NgxDtStartDateTime,
+    NgxDtEndDateTime,
+    NgxDtPicker,
+    ReactiveFormsModule,
+  ],
+  template: `
+    <ngx-dt-datetime-range-input [rangePicker]="picker" [formControl]="ctrl">
+      <input ngxDtStartDateTime />
+      <input ngxDtEndDateTime />
+    </ngx-dt-datetime-range-input>
+    <ngx-dt-picker
+      #picker
+      [inline]="true"
+      type="datetime-range"
+      [dateFilter]="dateFilter()"
+    />
+  `,
+})
+class ValidatedHostWithFilter {
+  readonly ctrl = new FormControl<DateRange<Temporal.PlainDate> | null>(null);
+  readonly dateFilter = signal<(d: Temporal.PlainDate) => boolean>(() => true);
+}
+
 function startEnd(fixture: { nativeElement: HTMLElement }): {
   start: HTMLInputElement;
   end: HTMLInputElement;
@@ -151,5 +177,23 @@ describe('NgxDtDateTimeRangeInput — validation', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.ctrl.hasError('ngxDtMin')).toBe(true);
+  });
+
+  it('reports ngxDtFilter when an end datetime is on a filtered-out day', async () => {
+    setup();
+    const fixture = TestBed.createComponent(ValidatedHostWithFilter);
+    fixture.componentInstance.dateFilter.set(
+      (d) => Temporal.PlainDate.compare(d, Temporal.PlainDate.from('2026-06-25')) !== 0,
+    );
+    await fixture.whenStable();
+    const [start, end] = Array.from(
+      fixture.nativeElement.querySelectorAll('input'),
+    ) as HTMLInputElement[];
+    start.value = '2026-06-21T09:00';
+    start.dispatchEvent(new Event('input'));
+    end.value = '2026-06-25T17:00';
+    end.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.ctrl.errors).toEqual({ ngxDtFilter: true });
   });
 });
