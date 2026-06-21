@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideTemporalDateAdapter, provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
 import { App } from './app';
 
 describe('App', () => {
@@ -11,8 +11,7 @@ describe('App', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideNoopAnimations(),
-        provideTemporalDateAdapter(),
-        provideTemporalTimeAdapter(),
+        provideTemporalDateTimeAdapter(),
       ],
     }).compileComponents();
   });
