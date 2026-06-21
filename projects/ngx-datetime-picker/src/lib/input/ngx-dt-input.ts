@@ -76,7 +76,8 @@ export class NgxDtInput<D = unknown>
   protected _onValidatorChange: () => void = () => {};
 
   constructor() {
-    // The picker holds min/max/dateFilter; re-run validation when they change.
+    // Re-validate whenever the picker's constraints change. The required `picker`
+    // input is resolved before this effect first runs, so `this.picker()` is safe.
     effect(() => {
       const picker = this.picker();
       picker.min();

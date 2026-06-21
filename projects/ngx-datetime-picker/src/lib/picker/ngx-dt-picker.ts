@@ -646,6 +646,8 @@ export class NgxDtPicker<D = unknown> {
   protected readonly startTimePanelMin = computed<D | null>(() =>
     this.boundOnDay(this.rangeDisplayValue()?.start ?? null, this.min()),
   );
+  // The time panel pre-clamps the composed value against these bounds before it
+  // emits, so a same-day start can never be stepped past the end (and vice versa).
   protected readonly startTimePanelMax = computed<D | null>(() => {
     const r = this.rangeDisplayValue();
     const start = r?.start ?? null;
