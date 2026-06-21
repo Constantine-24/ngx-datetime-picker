@@ -73,4 +73,16 @@ export class App {
   // Datetime range (Reactive Forms)
   protected readonly dateTimeRangeCtrl =
     new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
+
+  // Dual-calendar date range
+  protected readonly dualRangeCtrl = new FormControl<DateRange<Temporal.PlainDate> | null>(null);
+
+  // Draft-mode date (draftValue tracks via signal; draftCtrl drives the form input)
+  protected readonly draftValue = signal<Temporal.PlainDate | null>(null);
+  protected readonly draftCtrl = new FormControl<Temporal.PlainDate | null>(null);
+
+  // Filtered datetime: weekdays only, business hours 09:00–17:00
+  protected readonly weekdaysOnly = (d: Temporal.PlainDate) => d.dayOfWeek <= 5;
+  protected readonly businessHours = (t: Temporal.PlainTime) => t.hour >= 9 && t.hour < 17;
+  protected readonly filteredCtrl = new FormControl<Temporal.PlainDateTime | null>(null);
 }
