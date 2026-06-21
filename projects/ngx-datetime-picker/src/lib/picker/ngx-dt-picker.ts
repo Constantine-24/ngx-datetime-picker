@@ -414,8 +414,11 @@ export class NgxDtPicker<D = unknown> {
   readonly startView = input<'month' | 'year' | 'multi-year'>('month');
   readonly min = input<D | null>(null);
   readonly max = input<D | null>(null);
+  /** Predicate to disable individual calendar dates. For datetime variants the argument is the date part of the datetime value. */
   readonly dateFilter = input<(date: D) => boolean>(() => true);
+  /** Show two side-by-side calendars in range modes (`1` for single calendar, `2` for dual). Ignored for non-range variants. */
   readonly monthsToDisplay = input<1 | 2>(1);
+  /** Buffer all changes into a draft until the user confirms with Apply; Cancel discards the draft without updating the form. */
   readonly draftMode = input(false);
   readonly disabled = input(false);
   readonly hasBackdrop = input(this.options.hasBackdrop);
@@ -434,6 +437,7 @@ export class NgxDtPicker<D = unknown> {
   readonly hourCycle = input<12 | 24 | null>(null);
   readonly minuteStep = input(1);
   readonly showSeconds = input(false);
+  /** Predicate to disable individual time steps in the time panel. Receives a time value of type `D`. */
   readonly timeFilter = input<(time: D) => boolean>(() => true);
 
   readonly isTime = computed(() => this.type() === 'time');
