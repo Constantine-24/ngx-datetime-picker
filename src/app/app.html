@@ -91,6 +91,28 @@
     <ngx-dt-picker #tp type="time" [hourCycle]="12" />
     <p>Time: {{ timeCtrl.value?.toString() ?? 'none' }}</p>
   </section>
+
+  <section>
+    <h2>Datetime (inline, with seconds)</h2>
+    <ngx-dt-picker
+      type="datetime"
+      [inline]="true"
+      [(value)]="inlineDateTime"
+      [showSeconds]="true"
+    />
+    <p>Selected: {{ inlineDateTime()?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Datetime (popup, Reactive Forms)</h2>
+    <mat-form-field>
+      <mat-label>Pick a date &amp; time</mat-label>
+      <input matInput [ngxDtDateTimeInput]="dtp" [formControl]="dateTimeCtrl" />
+      <ngx-dt-toggle matSuffix [for]="dtp" ariaLabel="Open datetime picker" />
+    </mat-form-field>
+    <ngx-dt-picker #dtp type="datetime" [hourCycle]="12" />
+    <p>Datetime: {{ dateTimeCtrl.value?.toString() ?? 'none' }}</p>
+  </section>
 </main>
 
 <router-outlet />
