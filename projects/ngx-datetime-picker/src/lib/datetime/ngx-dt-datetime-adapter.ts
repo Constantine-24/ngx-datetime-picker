@@ -62,10 +62,10 @@ export abstract class NgxDtDateTimeAdapter<DT, D = unknown, T = unknown> {
 
   /** Clamp `value` into the inclusive `[min, max]` window (nulls = unbounded). */
   clampDateTime(value: DT, min: DT | null, max: DT | null): DT {
-    if (min && this.compareDateTime(value, min) < 0) {
+    if (min != null && this.compareDateTime(value, min) < 0) {
       return min;
     }
-    if (max && this.compareDateTime(value, max) > 0) {
+    if (max != null && this.compareDateTime(value, max) > 0) {
       return max;
     }
     return value;
