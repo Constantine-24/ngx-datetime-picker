@@ -117,6 +117,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           [showSeconds]="showSeconds()"
           [disabled]="disabled()"
           [ariaLabel]="ariaLabel()"
+          [timeFilter]="timeFilter()"
         />
       } @else {
         <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isAnyDateTime()">
@@ -141,6 +142,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
               [showSeconds]="showSeconds()"
               [disabled]="disabled()"
               ariaLabel="Choose a time"
+              [timeFilter]="timeFilter()"
             />
           }
           @if (isDateTimeRange()) {
@@ -157,6 +159,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
                   [showSeconds]="showSeconds()"
                   [disabled]="disabled()"
                   ariaLabel="Choose a start time"
+                  [timeFilter]="timeFilter()"
                 />
               </div>
               <div class="ngx-dt-range-time">
@@ -171,6 +174,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
                   [showSeconds]="showSeconds()"
                   [disabled]="disabled()"
                   ariaLabel="Choose an end time"
+                  [timeFilter]="timeFilter()"
                 />
               </div>
             </div>
@@ -308,6 +312,7 @@ export class NgxDtPicker<D = unknown> {
   readonly hourCycle = input<12 | 24 | null>(null);
   readonly minuteStep = input(1);
   readonly showSeconds = input(false);
+  readonly timeFilter = input<(time: D) => boolean>(() => true);
 
   readonly isTime = computed(() => this.type() === 'time');
   readonly isDateTime = computed(() => this.type() === 'datetime');
