@@ -556,3 +556,128 @@ describe('NgxDtPicker — time mode', () => {
     expect(fixture.componentInstance.value()!.hour).toBe(10);
   });
 });
+
+// --- Plan 6: datetime mode -----------------------------------------------
+
+import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker #picker type="datetime" [inline]="true" [(value)]="value" />
+  `,
+})
+class InlineDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker type="datetime" [(value)]="value" />
+  `,
+})
+class OverlayDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+describe('NgxDtPicker — datetime mode', () => {
+  function setupDateTime() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateTimeAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupDateTime);
+
+  it('renders BOTH a calendar and a time panel inline', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('mat-calendar')).toBeTruthy();
+    expect(root.querySelector('ngx-dt-time-panel')).toBeTruthy();
+  });
+
+  it('picking a day with no prior value yields that date at midnight', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cell: HTMLElement = fixture.nativeElement.querySelector(
+      '.mat-calendar-body-cell',
+    );
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(v.hour).toBe(0);
+    expect(v.minute).toBe(0);
+  });
+
+  it('carries the time across a date change', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(
+      Temporal.PlainDateTime.from('2026-06-21T09:30'),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // Click a different day in the same (June 2026) view.
+    const cells = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '.mat-calendar-body-cell',
+      ),
+    );
+    cells[24].click(); // 25th of the month
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(25);
+    expect(v.hour).toBe(9);
+    expect(v.minute).toBe(30);
+  });
+
+  it('carries the date across a time change (stepper)', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(
+      Temporal.PlainDateTime.from('2026-06-21T09:30'),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="up-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(21);
+    expect(v.hour).toBe(10);
+    expect(v.minute).toBe(30);
+  });
+
+  it('does NOT auto-close on a date pick in overlay datetime mode', async () => {
+    const fixture = TestBed.createComponent(OverlayDateTimeHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cell = document.querySelector<HTMLElement>(
+      '.cdk-overlay-container .mat-calendar-body-cell',
+    )!;
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDateTime);
+  });
+});
