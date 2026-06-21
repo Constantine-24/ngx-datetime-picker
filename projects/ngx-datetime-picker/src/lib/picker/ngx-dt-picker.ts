@@ -284,6 +284,33 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   `,
   styles: [
     `
+      /* The panel is the picker's surface. MatCalendar renders only the grid;
+         in a stock MatDatepicker the surface (background, elevation, rounded
+         corners) comes from mat-datepicker-content. We use MatCalendar bare, so
+         the panel must paint that surface itself — otherwise the popup is
+         transparent and overlaps the content behind it. */
+      .ngx-dt-panel {
+        display: inline-block;
+        box-sizing: border-box;
+        background: var(--mat-sys-surface-container-high, #fff);
+        color: var(--mat-sys-on-surface, #1d1b20);
+        border-radius: var(--mat-sys-corner-large, 16px);
+        padding: 8px;
+      }
+      /* Popup floats above page content → needs elevation. */
+      .ngx-dt-panel[role='dialog'] {
+        box-shadow: var(
+          --mat-sys-level3,
+          0 3px 5px -1px rgba(0, 0, 0, 0.2),
+          0 6px 10px 0 rgba(0, 0, 0, 0.14),
+          0 1px 18px 0 rgba(0, 0, 0, 0.12)
+        );
+      }
+      /* Inline panel sits in the page flow → a hairline reads as a card without
+         a floating drop-shadow. */
+      .ngx-dt-panel[role='group'] {
+        border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+      }
       .ngx-dt-body-datetime {
         display: flex;
         flex-direction: column;
@@ -339,6 +366,17 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
       .ngx-dt-calendars-row {
         display: flex;
         gap: 8px;
+      }
+      /* MatCalendar has no intrinsic width (mat-datepicker-content normally
+         sizes it). Without a width it stretches to fill a block panel (inline
+         mode) or collapses the 7-column grid as a flex item (dual mode), so pin
+         every calendar to Material's canonical width. */
+      .ngx-dt-panel mat-calendar {
+        width: 296px;
+      }
+      /* In the dual row the calendars are flex items — stop them shrinking. */
+      .ngx-dt-calendars-row mat-calendar {
+        flex: 0 0 auto;
       }
       .ngx-dt-cal-nav {
         display: flex;
