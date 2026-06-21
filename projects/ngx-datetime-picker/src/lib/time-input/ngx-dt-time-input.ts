@@ -82,11 +82,12 @@ export class NgxDtTimeInput<T = unknown>
   protected _onValidatorChange: () => void = () => {};
 
   constructor() {
-    // The picker holds min/max; re-run validation when they change.
+    // The picker holds min/max/timeFilter; re-run validation when they change.
     effect(() => {
       const picker = this.picker();
       picker.min();
       picker.max();
+      picker.timeFilter();
       this._onValidatorChange();
     });
   }
@@ -134,6 +135,9 @@ export class NgxDtTimeInput<T = unknown>
     const max = picker.max();
     if (max && this.adapter.compareTime(max, value) < 0) {
       return { ngxDtMax: { max, actual: value } };
+    }
+    if (!picker.timeFilter()(value)) {
+      return { ngxDtFilter: true };
     }
     return null;
   }

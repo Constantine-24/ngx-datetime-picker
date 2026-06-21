@@ -281,6 +281,7 @@ export class NgxDtTimePanel<T = unknown> {
   readonly disabled = input(false);
   readonly ariaLabel = input('Choose a time');
   readonly hourCycle = input<12 | 24 | null>(null);
+  readonly timeFilter = input<(time: T) => boolean>(() => true);
 
   protected readonly effectiveHourCycle = computed<12 | 24>(() =>
     resolveHourCycle(this.hourCycle(), this.locale),
@@ -318,11 +319,38 @@ export class NgxDtTimePanel<T = unknown> {
     return p ? pad(p.second) : '--';
   });
 
+  /** Whether a composed/clamped time passes the active filter. */
+  private allowed(time: T): boolean {
+    return this.timeFilter()(time);
+  }
+
   // --- field stepping / typing ---------------------------------------------
 
   protected step(field: TimeField, direction: number): void {
+    if (this.disabled()) return;
     const unit = field === 'minute' ? this.minuteStep() : 1;
-    this.commit((p) => this.stepField(p, field, direction * unit));
+    const perStep = direction * unit;
+    const base = this.parts() ?? this.toParts(this.baseTime());
+    // Field cycles are 24 (hour) or 60 (minute/second); cap the skip search at
+    // one full cycle so an all-filtered field can never loop forever.
+    const cap = field === 'hour' ? 24 : 60;
+    let candidate = base;
+    for (let i = 0; i < cap; i++) {
+      candidate = this.stepField(candidate, field, perStep);
+      const composed = this.adapter.createTime(
+        candidate.hour,
+        candidate.minute,
+        candidate.second,
+      );
+      const clamped = this.adapter.clampTime(composed, this.min(), this.max());
+      if (this.allowed(clamped)) {
+        if (!this.adapter.sameTime(clamped, this.value())) {
+          this.value.set(clamped);
+          void this.live.announce(this.announceText(clamped), 'polite');
+        }
+        return;
+      }
+    }
   }
 
   protected onFieldKeydown(field: TimeField, event: KeyboardEvent): void {
@@ -359,12 +387,15 @@ export class NgxDtTimePanel<T = unknown> {
     });
   }
 
-  /** Apply a parts mutation, compose, clamp, set, announce on change. */
+  /** Apply a parts mutation, compose, clamp; reject if filtered; else set+announce. */
   private commit(mutate: (p: TimeParts) => TimeParts): void {
     const base = this.parts() ?? this.toParts(this.baseTime());
     const next = mutate(base);
     const composed = this.adapter.createTime(next.hour, next.minute, next.second);
     const clamped = this.adapter.clampTime(composed, this.min(), this.max());
+    if (!this.allowed(clamped)) {
+      return; // filtered out — no change
+    }
     if (!this.adapter.sameTime(clamped, this.value())) {
       this.value.set(clamped);
       void this.live.announce(this.announceText(clamped), 'polite');
