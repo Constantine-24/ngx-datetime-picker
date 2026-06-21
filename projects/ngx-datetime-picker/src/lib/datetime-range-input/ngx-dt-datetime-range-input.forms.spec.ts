@@ -52,15 +52,17 @@ describe('NgxDtDateTimeRangeInput — Reactive Forms', () => {
         <input ngxDtStartDateTime />
         <input ngxDtEndDateTime />
       </ngx-dt-datetime-range-input>
-      <ngx-dt-picker #picker [inline]="true" type="datetime-range" />
+      <ngx-dt-picker #picker [inline]="true" type="datetime-range" [hourCycle]="hourCycle()" />
     `,
   })
   class ReactiveHost {
     readonly ctrl = new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
+    readonly hourCycle = signal<12 | 24 | null>(null);
   }
 
   it('round-trips model <-> view', async () => {
     const fixture = TestBed.createComponent(ReactiveHost);
+    fixture.componentInstance.hourCycle.set(24);
     fixture.detectChanges();
     await fixture.whenStable();
 

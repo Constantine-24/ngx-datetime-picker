@@ -73,4 +73,25 @@ export class App {
   // Datetime range (Reactive Forms)
   protected readonly dateTimeRangeCtrl =
     new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
+
+  // Dual-calendar date range
+  protected readonly dualRangeCtrl = new FormControl<DateRange<Temporal.PlainDate> | null>(null);
+
+  // Draft-mode date (draftValue tracks via signal; draftCtrl drives the form input)
+  protected readonly draftValue = signal<Temporal.PlainDate | null>(null);
+  protected readonly draftCtrl = new FormControl<Temporal.PlainDate | null>(null);
+
+  // Filtered datetime: weekdays only, business hours 09:00–17:00.
+  // A template-ref picker is `NgxDtPicker<unknown>` (so the same ref can drive
+  // the toggle's `[for]`). Typing these predicates' params as `unknown` keeps the
+  // picker's generic at `unknown` — avoiding a `$any` cast in the template — while
+  // the body casts to the part the picker actually passes at runtime (the calendar
+  // feeds the date part to dateFilter, the time panel feeds the time part).
+  protected readonly weekdaysOnly = (d: unknown) =>
+    (d as Temporal.PlainDate).dayOfWeek <= 5;
+  protected readonly businessHours = (t: unknown) => {
+    const time = t as Temporal.PlainTime;
+    return time.hour >= 9 && time.hour < 17;
+  };
+  protected readonly filteredCtrl = new FormControl<Temporal.PlainDateTime | null>(null);
 }

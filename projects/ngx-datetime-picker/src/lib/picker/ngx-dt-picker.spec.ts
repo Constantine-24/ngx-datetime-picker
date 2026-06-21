@@ -8,6 +8,8 @@ import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 import { DateRange } from '@angular/material/datepicker';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker, NgxDtPickerInput, NgxDtPickerRangeInput } from './ngx-dt-picker';
+import { Directionality, type Direction } from '@angular/cdk/bidi';
+import { Subject } from 'rxjs';
 
 @Component({
   imports: [NgxDtPicker],
@@ -1030,6 +1032,162 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
   });
 });
 
+// --- Plan 8: dual synced calendars (monthsToDisplay=2) -------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="date-range" [monthsToDisplay]="months()" [startAt]="startAt()" />`,
+})
+class DualHost {
+  months = signal<1 | 2>(2);
+  startAt = signal<Temporal.PlainDate | null>(null);
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="datetime-range" [monthsToDisplay]="2" [startAt]="startAt()" />`,
+})
+class DualDateTimeHost {
+  startAt = signal<Temporal.PlainDateTime | null>(null);
+}
+
+describe('NgxDtPicker — dual calendars (monthsToDisplay)', () => {
+  function setupDual() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupDual);
+
+  it('renders two calendars when monthsToDisplay is 2 (range mode)', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(2);
+  });
+
+  it('renders a single calendar when monthsToDisplay is 1', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.months.set(1);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(1);
+  });
+
+  it('the shared next-month control advances both month labels', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const labels = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ngx-dt-cal-label'),
+      ).map((el) => el.textContent?.trim());
+    expect(labels()).toEqual(['June 2026', 'July 2026']);
+    (fixture.nativeElement.querySelector('[data-testid="cal-next"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(labels()).toEqual(['July 2026', 'August 2026']);
+  });
+
+  it('renders two calendars for a datetime-range picker too', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateTimeAdapter(),
+      ],
+    });
+    const fixture = TestBed.createComponent(DualDateTimeHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDateTime.from('2026-06-15T00:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(2);
+  });
+});
+
+// --- Plan 8 (Task 6): draft / Apply-Cancel mode ---------------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker type="date" [draftMode]="true" [(value)]="value" />
+  `,
+})
+class DraftHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+function createDraftHost() {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    providers: [
+      provideZonelessChangeDetection(),
+      provideNoopAnimations(),
+      provideTemporalDateAdapter(),
+    ],
+  });
+  const fixture = TestBed.createComponent(DraftHost);
+  fixture.detectChanges();
+  return fixture;
+}
+
+describe('NgxDtPicker — draftMode', () => {
+  it('draftMode: selecting buffers until Apply, then commits', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    // simulate a calendar selection (date mode uses (selectedChange))
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull(); // buffered, not committed
+    (document.querySelector('[data-testid="dt-apply"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(cmp.value()?.toString()).toBe('2026-06-21');
+    expect(cmp.picker().isOpen()).toBe(false);
+  });
+
+  it('draftMode: Cancel discards the buffered selection', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    (document.querySelector('[data-testid="dt-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull();
+    expect(cmp.picker().isOpen()).toBe(false);
+  });
+
+  it('draftMode: closing via backdrop/escape discards the draft', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    cmp.picker().close();
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull();
+  });
+});
+
 // --- Plan 7: datetime-range — time panels + footer -----------------------
 
 @Component({
@@ -1243,5 +1401,84 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     expect(
       (inline.nativeElement as HTMLElement).querySelector('[data-testid="dt-done"]'),
     ).toBeNull();
+  });
+
+  /** Returns the NgxDtPicker instance from an InlineDateTimeRangeHost fixture. */
+  function createDateTimeRangePicker(): NgxDtPicker<Temporal.PlainDateTime> {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    return fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
+  }
+
+  it('exposes symmetric start/end time-panel bounds on a shared day', async () => {
+    // datetime-range picker with a range whose start and end fall on the same day.
+    const p = createDateTimeRangePicker();
+    p.range.set(
+      new DateRange(
+        Temporal.PlainDateTime.from('2026-06-21T09:00'),
+        Temporal.PlainDateTime.from('2026-06-21T17:00'),
+      ),
+    );
+    // start ceiling is the end time; end floor is the start time (same day).
+    expect((p as any).startTimePanelMax()?.toString()).toContain('17:00');
+    expect((p as any).endTimePanelMin()?.toString()).toContain('09:00');
+  });
+
+  it('stepping a start time before any date anchors to today (intentional parity)', async () => {
+    const p = createDateTimeRangePicker();
+    p.range.set(new DateRange<Temporal.PlainDateTime>(null, null));
+    (p as any).onStartTimeChange(Temporal.PlainTime.from('08:30') as unknown as never);
+    await Promise.resolve();
+    const start = p.range()?.start;
+    expect(start).not.toBeNull();
+    expect(start!.toPlainTime().toString()).toContain('08:30');
+  });
+});
+
+// --- Plan 8 (Task 7): RTL support -----------------------------------------
+
+describe('NgxDtPicker — RTL support', () => {
+  it('reflects the ambient direction on the panel (RTL)', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+        { provide: Directionality, useValue: { value: 'rtl', change: new Subject<Direction>() } },
+      ],
+    });
+    // Host: <ngx-dt-picker [inline]="true" />
+    const fixture = TestBed.createComponent(InlineHost);
+    await fixture.whenStable();
+    const panel = fixture.nativeElement.querySelector('.ngx-dt-panel') as HTMLElement;
+    expect(panel.getAttribute('dir')).toBe('rtl');
+  });
+});
+
+// --- Task 9 (deferred Minor from Task 5): dualCalendars gates on calendarRangeMode ---------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="date" [monthsToDisplay]="2" />`,
+})
+class NonRangeDualHost {}
+
+describe('NgxDtPicker — non-range monthsToDisplay=2 renders one calendar', () => {
+  it('a non-range picker with monthsToDisplay=2 still renders ONE mat-calendar', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+      ],
+    });
+    const fixture = TestBed.createComponent(NonRangeDualHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // dualCalendars() gates on calendarRangeMode(); for type="date" it must be false.
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(1);
   });
 });

@@ -136,6 +136,57 @@
       {{ dateTimeRangeCtrl.value?.end?.toString() ?? '—' }}
     </p>
   </section>
+
+  <section>
+    <h2>Dual-calendar date range</h2>
+    <div class="ngx-dt-range-field">
+      <ngx-dt-date-range-input
+        [rangePicker]="dualRange"
+        [formControl]="dualRangeCtrl"
+        ariaLabel="Select date range"
+      >
+        <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
+        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
+        <input ngxDtEndDate placeholder="End" aria-label="End date" />
+      </ngx-dt-date-range-input>
+      <ngx-dt-toggle [for]="dualRange" ariaLabel="Open dual-calendar range picker" />
+    </div>
+    <ngx-dt-picker #dualRange type="date-range" [monthsToDisplay]="2" />
+    <p>
+      Range:
+      {{ dualRangeCtrl.value?.start?.toString() ?? '—' }}
+      →
+      {{ dualRangeCtrl.value?.end?.toString() ?? '—' }}
+    </p>
+  </section>
+
+  <section>
+    <h2>Draft-mode date</h2>
+    <mat-form-field>
+      <mat-label>Pick a date (draft mode)</mat-label>
+      <input matInput [ngxDtInput]="draftPick" [formControl]="draftCtrl" />
+      <ngx-dt-toggle matSuffix [for]="draftPick" ariaLabel="Open draft-mode date picker" />
+    </mat-form-field>
+    <ngx-dt-picker #draftPick [draftMode]="true" />
+    <p>Draft value: {{ draftCtrl.value?.toString() ?? 'none' }}</p>
+  </section>
+
+  <section>
+    <h2>Filtered datetime (weekdays, 09:00–17:00, 12h)</h2>
+    <mat-form-field>
+      <mat-label>Pick a weekday &amp; business hour</mat-label>
+      <input matInput [ngxDtDateTimeInput]="filteredPick" [formControl]="filteredCtrl" />
+      <ngx-dt-toggle matSuffix [for]="filteredPick" ariaLabel="Open filtered datetime picker" />
+    </mat-form-field>
+    <ngx-dt-picker
+      #filteredPick
+      type="datetime"
+      [hourCycle]="12"
+      [dateFilter]="weekdaysOnly"
+      [timeFilter]="businessHours"
+    />
+    <p>Selected: {{ filteredCtrl.value?.toString() ?? 'none' }}</p>
+  </section>
 </main>
 
 <router-outlet />
