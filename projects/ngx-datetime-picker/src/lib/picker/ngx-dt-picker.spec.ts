@@ -1030,6 +1030,88 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
   });
 });
 
+// --- Plan 8: dual synced calendars (monthsToDisplay=2) -------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="date-range" [monthsToDisplay]="months()" [startAt]="startAt()" />`,
+})
+class DualHost {
+  months = signal<1 | 2>(2);
+  startAt = signal<Temporal.PlainDate | null>(null);
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="datetime-range" [monthsToDisplay]="2" [startAt]="startAt()" />`,
+})
+class DualDateTimeHost {
+  startAt = signal<Temporal.PlainDateTime | null>(null);
+}
+
+describe('NgxDtPicker — dual calendars (monthsToDisplay)', () => {
+  function setupDual() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupDual);
+
+  it('renders two calendars when monthsToDisplay is 2 (range mode)', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(2);
+  });
+
+  it('renders a single calendar when monthsToDisplay is 1', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.months.set(1);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(1);
+  });
+
+  it('the shared next-month control advances both month labels', async () => {
+    const fixture = TestBed.createComponent(DualHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDate.from('2026-06-15'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const labels = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ngx-dt-cal-label'),
+      ).map((el) => el.textContent?.trim());
+    expect(labels()).toEqual(['June 2026', 'July 2026']);
+    (fixture.nativeElement.querySelector('[data-testid="cal-next"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(labels()).toEqual(['July 2026', 'August 2026']);
+  });
+
+  it('renders two calendars for a datetime-range picker too', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateTimeAdapter(),
+      ],
+    });
+    const fixture = TestBed.createComponent(DualDateTimeHost);
+    fixture.componentInstance.startAt.set(Temporal.PlainDateTime.from('2026-06-15T00:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(2);
+  });
+});
+
 // --- Plan 7: datetime-range — time panels + footer -----------------------
 
 @Component({

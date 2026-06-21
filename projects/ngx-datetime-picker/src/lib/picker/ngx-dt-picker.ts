@@ -25,6 +25,7 @@ import {
 import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
 import { NgxDtTimePanel } from '../time-panel/ngx-dt-time-panel';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
+import { NgxDtEmptyCalendarHeader } from './ngx-dt-empty-calendar-header';
 
 /** Picker variants. All five are implemented. */
 export type NgxDtPickerType =
@@ -121,16 +122,60 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         />
       } @else {
         <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isAnyDateTime()">
-          <mat-calendar
-            [startAt]="effectiveStartAt()"
-            [startView]="startView()"
-            [selected]="calendarSelection()"
-            [minDate]="calendarMin()"
-            [maxDate]="calendarMax()"
-            [dateFilter]="dateFilter()"
-            (selectedChange)="onSelectedChange($event)"
-            (_userSelection)="onUserSelection($event)"
-          />
+          @if (dualCalendars()) {
+            <div class="ngx-dt-calendars">
+              <div class="ngx-dt-cal-nav" role="group" aria-label="Calendar navigation">
+                <button
+                  type="button"
+                  class="ngx-dt-cal-arrow"
+                  data-testid="cal-prev"
+                  [disabled]="disabled()"
+                  aria-label="Previous month"
+                  (click)="onPrevMonth()"
+                >
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <span class="ngx-dt-cal-label">{{ monthLabel(activeMonthStart()) }}</span>
+                <span class="ngx-dt-cal-label">{{ monthLabel(activeMonthNext()) }}</span>
+                <button
+                  type="button"
+                  class="ngx-dt-cal-arrow"
+                  data-testid="cal-next"
+                  [disabled]="disabled()"
+                  aria-label="Next month"
+                  (click)="onNextMonth()"
+                >
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+              <div class="ngx-dt-calendars-row">
+                @for (m of dualMonths(); track m.key) {
+                  <mat-calendar
+                    [startAt]="m.start"
+                    [startView]="'month'"
+                    [headerComponent]="emptyHeader"
+                    [selected]="calendarSelection()"
+                    [minDate]="calendarMin()"
+                    [maxDate]="calendarMax()"
+                    [dateFilter]="dateFilter()"
+                    (selectedChange)="onSelectedChange($event)"
+                    (_userSelection)="onUserSelection($event)"
+                  />
+                }
+              </div>
+            </div>
+          } @else {
+            <mat-calendar
+              [startAt]="effectiveStartAt()"
+              [startView]="startView()"
+              [selected]="calendarSelection()"
+              [minDate]="calendarMin()"
+              [maxDate]="calendarMax()"
+              [dateFilter]="dateFilter()"
+              (selectedChange)="onSelectedChange($event)"
+              (_userSelection)="onUserSelection($event)"
+            />
+          }
           @if (isDateTime()) {
             <ngx-dt-time-panel
               [value]="timePanelValue()"
@@ -269,6 +314,42 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         color: var(--mat-sys-on-primary, HighlightText);
         border-color: transparent;
       }
+      .ngx-dt-calendars-row {
+        display: flex;
+        gap: 8px;
+      }
+      .ngx-dt-cal-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+      }
+      .ngx-dt-cal-label {
+        flex: 1;
+        text-align: center;
+        font: var(--mat-sys-title-small, inherit);
+        color: var(--mat-sys-on-surface, inherit);
+      }
+      .ngx-dt-cal-arrow {
+        min-width: 32px;
+        min-height: 32px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--mat-sys-on-surface-variant, currentColor);
+        cursor: pointer;
+      }
+      .ngx-dt-cal-arrow:hover:not([disabled]) {
+        background: var(--mat-sys-surface-container-high, transparent);
+      }
+      .ngx-dt-cal-arrow:focus-visible {
+        outline: 2px solid var(--mat-sys-primary, Highlight);
+        outline-offset: 1px;
+      }
+      .ngx-dt-cal-arrow[disabled] {
+        opacity: 0.38;
+        cursor: default;
+      }
     `,
   ],
   host: { class: 'ngx-dt-picker' },
@@ -295,6 +376,7 @@ export class NgxDtPicker<D = unknown> {
   readonly min = input<D | null>(null);
   readonly max = input<D | null>(null);
   readonly dateFilter = input<(date: D) => boolean>(() => true);
+  readonly monthsToDisplay = input<1 | 2>(1);
   readonly disabled = input(false);
   readonly hasBackdrop = input(this.options.hasBackdrop);
   readonly restoreFocus = input(this.options.restoreFocus);
@@ -556,6 +638,60 @@ export class NgxDtPicker<D = unknown> {
       : this.startAt();
     return anchor ?? startAt ?? adapter.today();
   });
+
+  /** Custom header component used to hide each calendar's built-in nav. */
+  protected readonly emptyHeader = NgxDtEmptyCalendarHeader;
+
+  /** Dual months are only meaningful for the range variants. */
+  protected readonly dualCalendars = computed(
+    () => this.monthsToDisplay() === 2 && this.calendarRangeMode(),
+  );
+
+  /** Left month anchor; user navigation overrides the computed start-at. */
+  private readonly _activeMonth = signal<D | null>(null);
+  protected readonly activeMonthStart = computed<D | null>(
+    () => this._activeMonth() ?? this.effectiveStartAt(),
+  );
+  protected readonly activeMonthNext = computed<D | null>(() => {
+    const adapter = this.adapter;
+    const start = this.activeMonthStart();
+    return adapter && start ? adapter.addCalendarMonths(start, 1) : null;
+  });
+
+  /** Keyed descriptors for the two calendars; key change forces recreation. */
+  protected readonly dualMonths = computed(() => {
+    const adapter = this.adapter;
+    const start = this.activeMonthStart();
+    const next = this.activeMonthNext();
+    if (!adapter || !start || !next) return [];
+    return [
+      { key: this.monthKey(start), start },
+      { key: this.monthKey(next), start: next },
+    ];
+  });
+
+  private monthKey(d: D): string {
+    const a = this.adapter!;
+    return `${a.getYear(d)}-${a.getMonth(d)}`;
+  }
+
+  protected monthLabel(d: D | null): string {
+    const a = this.adapter;
+    if (!a || !d) return '';
+    return `${a.getMonthNames('long')[a.getMonth(d)]} ${a.getYear(d)}`;
+  }
+
+  protected onPrevMonth(): void {
+    const a = this.adapter;
+    const start = this.activeMonthStart();
+    if (a && start) this._activeMonth.set(a.addCalendarMonths(start, -1));
+  }
+
+  protected onNextMonth(): void {
+    const a = this.adapter;
+    const start = this.activeMonthStart();
+    if (a && start) this._activeMonth.set(a.addCalendarMonths(start, 1));
+  }
 
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
   open(origin?: NgxDtOrigin): void {
