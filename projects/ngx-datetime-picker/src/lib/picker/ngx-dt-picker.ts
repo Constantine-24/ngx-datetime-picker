@@ -26,8 +26,13 @@ import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
 import { NgxDtTimePanel } from '../time-panel/ngx-dt-time-panel';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
 
-/** Picker variants. `date`, `date-range`, `time`, and `datetime` are implemented. */
-export type NgxDtPickerType = 'date' | 'date-range' | 'time' | 'datetime';
+/** Picker variants. All five are implemented. */
+export type NgxDtPickerType =
+  | 'date'
+  | 'date-range'
+  | 'time'
+  | 'datetime'
+  | 'datetime-range';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
@@ -258,6 +263,17 @@ export class NgxDtPicker<D = unknown> {
 
   readonly isTime = computed(() => this.type() === 'time');
   readonly isDateTime = computed(() => this.type() === 'datetime');
+  readonly isDateTimeRange = computed(() => this.type() === 'datetime-range');
+
+  /** The calendar runs in range-selection mode for both range variants. */
+  readonly calendarRangeMode = computed(
+    () => this.isRange() || this.isDateTimeRange(),
+  );
+
+  /** Either datetime variant decomposes the value into date + time parts. */
+  readonly isAnyDateTime = computed(
+    () => this.isDateTime() || this.isDateTimeRange(),
+  );
 
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
@@ -329,18 +345,27 @@ export class NgxDtPicker<D = unknown> {
     if (this.isRange()) {
       return this.rangeDisplayValue() ?? this._emptyRange;
     }
+    if (this.isDateTimeRange()) {
+      // The calendar runs the PlainDate adapter, so it consumes the date parts
+      // of the datetime range. `datePart` already casts via `as unknown as D`.
+      const r = this.rangeDisplayValue();
+      return new DateRange<D>(
+        this.datePart(r?.start ?? null),
+        this.datePart(r?.end ?? null),
+      );
+    }
     if (this.isDateTime()) {
       return this.datePart(this.displayValue());
     }
     return this.displayValue();
   });
 
-  /** Calendar `[minDate]`/`[maxDate]` — date parts in datetime mode. */
+  /** Calendar `[minDate]`/`[maxDate]` — date parts in either datetime mode. */
   protected readonly calendarMin = computed<D | null>(() =>
-    this.isDateTime() ? this.datePart(this.min()) : this.min(),
+    this.isAnyDateTime() ? this.datePart(this.min()) : this.min(),
   );
   protected readonly calendarMax = computed<D | null>(() =>
-    this.isDateTime() ? this.datePart(this.max()) : this.max(),
+    this.isAnyDateTime() ? this.datePart(this.max()) : this.max(),
   );
 
   /** Value bound to the time panel — the time part in datetime mode, else the value. */
@@ -380,12 +405,19 @@ export class NgxDtPicker<D = unknown> {
     if (!adapter) {
       return null;
     }
-    const anchor = this.isRange()
-      ? (this.rangeDisplayValue()?.start ?? null)
-      : this.isDateTime()
-        ? this.datePart(this.displayValue())
-        : this.displayValue();
-    const startAt = this.isDateTime() ? this.datePart(this.startAt()) : this.startAt();
+    let anchor: D | null;
+    if (this.isDateTimeRange()) {
+      anchor = this.datePart(this.rangeDisplayValue()?.start ?? null);
+    } else if (this.isRange()) {
+      anchor = this.rangeDisplayValue()?.start ?? null;
+    } else if (this.isDateTime()) {
+      anchor = this.datePart(this.displayValue());
+    } else {
+      anchor = this.displayValue();
+    }
+    const startAt = this.isAnyDateTime()
+      ? this.datePart(this.startAt())
+      : this.startAt();
     return anchor ?? startAt ?? adapter.today();
   });
 
@@ -439,8 +471,18 @@ export class NgxDtPicker<D = unknown> {
     }
   }
 
+  /** Write a range through the registered range input seam, else the model. */
+  private commitRange(range: DateRange<D>): void {
+    const input = this._rangeInput();
+    if (input) {
+      input.setRangeFromPicker(range);
+    } else {
+      this.range.set(range);
+    }
+  }
+
   protected onSelectedChange(date: D | null): void {
-    if (this.isRange()) {
+    if (this.calendarRangeMode()) {
       return; // range selection is handled via (_userSelection)
     }
     if (this.isDateTime()) {
@@ -460,20 +502,52 @@ export class NgxDtPicker<D = unknown> {
   }
 
   protected onUserSelection(event: MatCalendarUserEvent<D | null>): void {
-    if (!this.isRange()) {
+    if (!this.calendarRangeMode()) {
       return; // single-date selection is handled via (selectedChange)
     }
     const strategy = this.injector.get<MatDateRangeSelectionStrategy<D>>(
       MAT_DATE_RANGE_SELECTION_STRATEGY,
     );
+
+    if (this.isDateTimeRange()) {
+      const dt = this.dtAdapter;
+      if (!dt) return;
+      const current = this.rangeDisplayValue() ?? this._emptyRange;
+      // Feed the strategy a date-part range (it compares dates); then lift each
+      // end back to a datetime, carrying its existing time (or midnight) and
+      // clamping the composed value into [min, max].
+      const currentDates = new DateRange<D>(
+        this.datePart(current.start),
+        this.datePart(current.end),
+      );
+      const nextDates = strategy.selectionFinished(
+        event.value,
+        currentDates,
+        event.event,
+      );
+      const start =
+        nextDates.start == null
+          ? null
+          : dt.clampDateTime(
+              dt.withDate(current.start, nextDates.start),
+              this.min(),
+              this.max(),
+            );
+      const end =
+        nextDates.end == null
+          ? null
+          : dt.clampDateTime(
+              dt.withDate(current.end, nextDates.end),
+              this.min(),
+              this.max(),
+            );
+      this.commitRange(new DateRange<D>(start, end));
+      return; // datetime-range stays open — the time still needs setting
+    }
+
     const current = this.rangeDisplayValue() ?? this._emptyRange;
     const next = strategy.selectionFinished(event.value, current, event.event);
-    const input = this._rangeInput();
-    if (input) {
-      input.setRangeFromPicker(next);
-    } else {
-      this.range.set(next);
-    }
+    this.commitRange(next);
     if (!this.inline() && next.start !== null && next.end !== null) {
       this.close();
     }
