@@ -587,6 +587,25 @@ class OverlayDateTimeHost {
   );
 }
 
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      #picker
+      type="datetime"
+      [inline]="true"
+      [(value)]="value"
+      [min]="min()"
+      [max]="max()"
+    />
+  `,
+})
+class ConstrainedDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+  min = signal<Temporal.PlainDateTime | null>(null);
+  max = signal<Temporal.PlainDateTime | null>(null);
+}
+
 describe('NgxDtPicker — datetime mode', () => {
   function setupDateTime() {
     TestBed.resetTestingModule();
@@ -679,5 +698,59 @@ describe('NgxDtPicker — datetime mode', () => {
     await fixture.whenStable();
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);
     expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDateTime);
+  });
+
+  it('clamps the time to min on the min day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T14:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // 14:30 -> down-hour -> 13:30 -> clamp to 14:00.
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="down-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.hour).toBe(14);
+    expect(v.minute).toBe(0);
+  });
+
+  it('does not floor the time on a later day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="down-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(22);
+    expect(v.hour).toBe(8); // freely below 14:00 on a later day
+  });
+
+  it('clamps a date change onto the min day up to the min time', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // Click the 21st (min day). 2026-06-21T09:00 < min -> clamp to 2026-06-21T14:00.
+    const cells = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '.mat-calendar-body-cell',
+      ),
+    );
+    cells[20].click(); // 21st
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(21);
+    expect(v.hour).toBe(14);
+    expect(v.minute).toBe(0);
   });
 });
