@@ -372,6 +372,13 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         opacity: 0.38;
         cursor: default;
       }
+      @media (prefers-reduced-motion: reduce) {
+        .ngx-dt-panel,
+        .ngx-dt-panel * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
     `,
   ],
   host: { class: 'ngx-dt-picker' },

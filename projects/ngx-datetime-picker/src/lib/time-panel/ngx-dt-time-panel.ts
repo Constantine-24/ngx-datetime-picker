@@ -216,6 +216,10 @@ function pad(value: number): string {
         outline: 2px solid var(--mat-sys-primary, Highlight);
         outline-offset: 1px;
       }
+      .ngx-dt-time-input:disabled {
+        opacity: 0.38;
+        cursor: default;
+      }
       .ngx-dt-time-step {
         display: inline-flex;
         align-items: center;
