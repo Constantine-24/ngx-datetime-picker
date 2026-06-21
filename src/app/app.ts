@@ -9,10 +9,13 @@ import {
   DateRange,
   NgxDtDateRangeInput,
   NgxDtDateTimeInput,
+  NgxDtDateTimeRangeInput,
   NgxDtEndDate,
+  NgxDtEndDateTime,
   NgxDtInput,
   NgxDtPicker,
   NgxDtStartDate,
+  NgxDtStartDateTime,
   NgxDtTimeInput,
   NgxDtToggle,
 } from 'ngx-datetime-picker';
@@ -34,6 +37,9 @@ import {
     NgxDtEndDate,
     NgxDtTimeInput,
     NgxDtDateTimeInput,
+    NgxDtDateTimeRangeInput,
+    NgxDtStartDateTime,
+    NgxDtEndDateTime,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -63,4 +69,8 @@ export class App {
   // Datetime picker
   protected readonly inlineDateTime = signal<Temporal.PlainDateTime | null>(null);
   protected readonly dateTimeCtrl = new FormControl<Temporal.PlainDateTime | null>(null);
+
+  // Datetime range (Reactive Forms)
+  protected readonly dateTimeRangeCtrl =
+    new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
 }

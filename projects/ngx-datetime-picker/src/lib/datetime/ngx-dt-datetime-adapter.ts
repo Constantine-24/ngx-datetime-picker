@@ -60,6 +60,16 @@ export abstract class NgxDtDateTimeAdapter<DT, D = unknown, T = unknown> {
     return this.compareDate(a, b) === 0;
   }
 
+  /**
+   * Compare two time parts independent of any date: combine each with a common
+   * (today's) date and compare the resulting datetimes. Negative if `a` is
+   * earlier than `b`, 0 if equal, positive if later.
+   */
+  compareTime(a: T, b: T): number {
+    const date = this.getDate(this.now());
+    return this.compareDateTime(this.combine(date, a), this.combine(date, b));
+  }
+
   /** Clamp `value` into the inclusive `[min, max]` window (nulls = unbounded). */
   clampDateTime(value: DT, min: DT | null, max: DT | null): DT {
     if (min != null && this.compareDateTime(value, min) < 0) {

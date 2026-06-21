@@ -75,4 +75,11 @@ describe('NgxDtDateTimeAdapter (concrete bridge)', () => {
     expect(a.withTime(null, 45)).toBe(a.combine(a.getDate(a.now()), 45));
     expect(a.withTime(a.combine(2, 30), 45)).toBe(a.combine(2, 45)); // date carried
   });
+
+  it('compareTime orders time parts independent of date', () => {
+    // Fake: time = minute-of-day. now() === 0 so getDate(now()) === 0.
+    expect(a.compareTime(30, 45)).toBeLessThan(0);
+    expect(a.compareTime(45, 30)).toBeGreaterThan(0);
+    expect(a.compareTime(30, 30)).toBe(0);
+  });
 });

@@ -113,6 +113,29 @@
     <ngx-dt-picker #dtp type="datetime" [hourCycle]="12" />
     <p>Datetime: {{ dateTimeCtrl.value?.toString() ?? 'none' }}</p>
   </section>
+
+  <section>
+    <h2>Datetime range (popup, Reactive Forms)</h2>
+    <div class="ngx-dt-range-field">
+      <ngx-dt-datetime-range-input
+        [rangePicker]="dtRangePick"
+        [formControl]="dateTimeRangeCtrl"
+        ariaLabel="Trip start and end"
+      >
+        <input ngxDtStartDateTime placeholder="Start" aria-label="Start date and time" />
+        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
+        <input ngxDtEndDateTime placeholder="End" aria-label="End date and time" />
+      </ngx-dt-datetime-range-input>
+      <ngx-dt-toggle [for]="dtRangePick" ariaLabel="Open datetime range picker" />
+    </div>
+    <ngx-dt-picker #dtRangePick type="datetime-range" [hourCycle]="12" />
+    <p>
+      Range:
+      {{ dateTimeRangeCtrl.value?.start?.toString() ?? '—' }}
+      →
+      {{ dateTimeRangeCtrl.value?.end?.toString() ?? '—' }}
+    </p>
+  </section>
 </main>
 
 <router-outlet />
