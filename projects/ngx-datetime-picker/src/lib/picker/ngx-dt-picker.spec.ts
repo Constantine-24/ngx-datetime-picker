@@ -839,3 +839,193 @@ describe('NgxDtPicker — datetime mode', () => {
     ).toBeNull();
   });
 });
+
+// --- Plan 7: datetime-range — calendar composition -----------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker #picker type="datetime-range" [inline]="true" [(range)]="range" />
+  `,
+})
+class InlineDateTimeRangeHost {
+  range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      #picker
+      type="datetime-range"
+      [inline]="true"
+      [(range)]="range"
+      [min]="min()"
+      [max]="max()"
+    />
+  `,
+})
+class ConstrainedDateTimeRangeHost {
+  range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
+  min = signal<Temporal.PlainDateTime | null>(null);
+  max = signal<Temporal.PlainDateTime | null>(null);
+}
+
+/** Minimal fake datetime range input implementing the picker's range contract. */
+class FakeDateTimeRangeInput
+  implements NgxDtPickerRangeInput<Temporal.PlainDateTime>
+{
+  readonly _range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
+  readonly range = this._range.asReadonly();
+  fromPicker: DateRange<Temporal.PlainDateTime> | undefined;
+  readonly origin = document.createElement('div');
+  setRangeFromPicker(range: DateRange<Temporal.PlainDateTime>): void {
+    this.fromPicker = range;
+    this._range.set(range);
+  }
+  getOverlayOrigin(): HTMLElement {
+    return this.origin;
+  }
+}
+
+describe('NgxDtPicker — datetime-range calendar composition', () => {
+  function setupDateTimeRange() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateTimeAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupDateTimeRange);
+
+  it('renders a range calendar inline', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('mat-calendar')).toBeTruthy();
+  });
+
+  it('first click sets the start at midnight with a null end', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    rangeCells(fixture)[4].click(); // 5th
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const r = fixture.componentInstance.range();
+    expect(r?.start).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(r?.start?.day).toBe(5);
+    expect(r?.start?.hour).toBe(0);
+    expect(r?.end).toBeNull();
+  });
+
+  it('a second click completes the range (end at midnight, ordered)', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cells = rangeCells(fixture);
+    cells[4].click(); // start = 5th
+    fixture.detectChanges();
+    await fixture.whenStable();
+    cells[9].click(); // end = 10th
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const r = fixture.componentInstance.range()!;
+    expect(r.start?.day).toBe(5);
+    expect(r.end?.day).toBe(10);
+    expect(r.end?.hour).toBe(0);
+    expect(
+      Temporal.PlainDateTime.compare(r.end!, r.start!),
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  it('carries the start time across a date re-pick and defaults a new end to midnight', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.componentInstance.range.set(
+      new DateRange(Temporal.PlainDateTime.from('2026-06-21T09:30'), null),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    rangeCells(fixture)[24].click(); // 25th -> completes the range (after the 21st)
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const r = fixture.componentInstance.range()!;
+    expect(r.start?.day).toBe(21);
+    expect(r.start?.hour).toBe(9); // start time carried
+    expect(r.start?.minute).toBe(30);
+    expect(r.end?.day).toBe(25);
+    expect(r.end?.hour).toBe(0); // brand-new end -> midnight
+  });
+
+  it('clamps a calendar pick onto the min day up to the min time', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeRangeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // First click on the 21st -> 2026-06-21T00:00 -> below min -> clamp to 14:00.
+    const cells = rangeCells(fixture);
+    cells[20].click(); // 21st
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const r = fixture.componentInstance.range()!;
+    expect(r.start?.day).toBe(21);
+    expect(r.start?.hour).toBe(14);
+    expect(r.start?.minute).toBe(0);
+  });
+
+  it('routes range selection to the registered range input, not [(range)]', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
+    const input = new FakeDateTimeRangeInput();
+    picker.registerRangeInput(input);
+
+    rangeCells(fixture)[4].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(input.fromPicker?.start).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(fixture.componentInstance.range()).toBeNull();
+  });
+
+  it('does not auto-close in overlay datetime-range mode after completing the range', async () => {
+    @Component({
+      imports: [NgxDtPicker],
+      template: `
+        <button #trigger type="button">open</button>
+        <ngx-dt-picker #picker type="datetime-range" [(range)]="range" />
+      `,
+    })
+    class OverlayDateTimeRangeHost {
+      range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
+      readonly picker =
+        viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+      readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+        'trigger',
+        { read: ElementRef },
+      );
+    }
+    const fixture = TestBed.createComponent(OverlayDateTimeRangeHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cells = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '.cdk-overlay-container .mat-calendar-body-cell',
+      ),
+    );
+    cells[4].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    cells[9].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+});
