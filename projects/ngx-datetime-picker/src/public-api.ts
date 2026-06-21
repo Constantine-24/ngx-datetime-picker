@@ -18,3 +18,5 @@ export { DateRange } from '@angular/material/datepicker';
 export { NgxDtTimeAdapter } from './lib/time/ngx-dt-time-adapter';
 export { NgxDtTimePanel } from './lib/time-panel/ngx-dt-time-panel';
 export { NgxDtTimeInput } from './lib/time-input/ngx-dt-time-input';
+export { NgxDtDateTimeAdapter } from './lib/datetime/ngx-dt-datetime-adapter';
+export { NgxDtDateTimeInput } from './lib/datetime-input/ngx-dt-datetime-input';

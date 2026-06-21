@@ -556,3 +556,286 @@ describe('NgxDtPicker — time mode', () => {
     expect(fixture.componentInstance.value()!.hour).toBe(10);
   });
 });
+
+// --- Plan 6: datetime mode -----------------------------------------------
+
+import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker #picker type="datetime" [inline]="true" [(value)]="value" />
+  `,
+})
+class InlineDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker type="datetime" [(value)]="value" />
+  `,
+})
+class OverlayDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <ngx-dt-picker
+      #picker
+      type="datetime"
+      [inline]="true"
+      [(value)]="value"
+      [min]="min()"
+      [max]="max()"
+    />
+  `,
+})
+class ConstrainedDateTimeHost {
+  value = signal<Temporal.PlainDateTime | null>(null);
+  min = signal<Temporal.PlainDateTime | null>(null);
+  max = signal<Temporal.PlainDateTime | null>(null);
+}
+
+describe('NgxDtPicker — datetime mode', () => {
+  function setupDateTime() {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateTimeAdapter(),
+      ],
+    });
+  }
+  beforeEach(setupDateTime);
+
+  it('renders BOTH a calendar and a time panel inline', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('mat-calendar')).toBeTruthy();
+    expect(root.querySelector('ngx-dt-time-panel')).toBeTruthy();
+  });
+
+  it('picking a day with no prior value yields that date at midnight', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cell: HTMLElement = fixture.nativeElement.querySelector(
+      '.mat-calendar-body-cell',
+    );
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(v.hour).toBe(0);
+    expect(v.minute).toBe(0);
+  });
+
+  it('carries the time across a date change', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(
+      Temporal.PlainDateTime.from('2026-06-21T09:30'),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // Click a different day in the same (June 2026) view.
+    const cells = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '.mat-calendar-body-cell',
+      ),
+    );
+    cells[24].click(); // 25th of the month
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(25);
+    expect(v.hour).toBe(9);
+    expect(v.minute).toBe(30);
+  });
+
+  it('carries the date across a time change (stepper)', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(
+      Temporal.PlainDateTime.from('2026-06-21T09:30'),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="up-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(21);
+    expect(v.hour).toBe(10);
+    expect(v.minute).toBe(30);
+  });
+
+  it('does NOT auto-close on a date pick in overlay datetime mode', async () => {
+    const fixture = TestBed.createComponent(OverlayDateTimeHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cell = document.querySelector<HTMLElement>(
+      '.cdk-overlay-container .mat-calendar-body-cell',
+    )!;
+    cell.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDateTime);
+  });
+
+  it('clamps the time to min on the min day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T14:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // 14:30 -> down-hour -> 13:30 -> clamp to 14:00.
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="down-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.hour).toBe(14);
+    expect(v.minute).toBe(0);
+  });
+
+  it('does not floor the time on a later day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="down-hour"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(22);
+    expect(v.hour).toBe(8); // freely below 14:00 on a later day
+  });
+
+  it('clamps a date change onto the min day up to the min time', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // Click the 21st (min day). 2026-06-21T09:00 < min -> clamp to 2026-06-21T14:00.
+    const cells = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '.mat-calendar-body-cell',
+      ),
+    );
+    cells[20].click(); // 21st
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const v = fixture.componentInstance.value()!;
+    expect(v.day).toBe(21);
+    expect(v.hour).toBe(14);
+    expect(v.minute).toBe(0);
+  });
+
+  it('timePanelMin/Max expose the bound time only on the boundary day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.max.set(Temporal.PlainDateTime.from('2026-06-23T17:00'));
+    // On the min day: floor = min time; max is a different day → no ceiling.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T16:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
+    const internals = picker as unknown as {
+      timePanelMin: () => Temporal.PlainTime | null;
+      timePanelMax: () => Temporal.PlainTime | null;
+    };
+    expect(internals.timePanelMin()).toBeInstanceOf(Temporal.PlainTime);
+    expect(internals.timePanelMin()!.hour).toBe(14);
+    expect(internals.timePanelMax()).toBeNull();
+
+    // On the max day: ceiling = max time; floor disappears.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-23T10:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(internals.timePanelMin()).toBeNull();
+    expect(internals.timePanelMax()).toBeInstanceOf(Temporal.PlainTime);
+    expect(internals.timePanelMax()!.hour).toBe(17);
+
+    // On a middle day: neither bound applies.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(internals.timePanelMin()).toBeNull();
+    expect(internals.timePanelMax()).toBeNull();
+  });
+
+  it('Now sets the value to a datetime and keeps the panel open', async () => {
+    const fixture = TestBed.createComponent(OverlayDateTimeHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    document
+      .querySelector<HTMLButtonElement>('.cdk-overlay-container [data-testid="dt-now"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+
+  it('Clear sets the value to null', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T09:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="dt-clear"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBeNull();
+  });
+
+  it('Done closes the overlay; it is absent inline', async () => {
+    const overlay = TestBed.createComponent(OverlayDateTimeHost);
+    overlay.detectChanges();
+    overlay.componentInstance.picker().open(overlay.componentInstance.trigger());
+    overlay.detectChanges();
+    await overlay.whenStable();
+    const done = document.querySelector<HTMLButtonElement>(
+      '.cdk-overlay-container [data-testid="dt-done"]',
+    )!;
+    expect(done).toBeTruthy();
+    done.click();
+    overlay.detectChanges();
+    await overlay.whenStable();
+    expect(overlay.componentInstance.picker().isOpen()).toBe(false);
+
+    const inline = TestBed.createComponent(InlineDateTimeHost);
+    inline.detectChanges();
+    await inline.whenStable();
+    expect(
+      (inline.nativeElement as HTMLElement).querySelector('[data-testid="dt-done"]'),
+    ).toBeNull();
+  });
+});
