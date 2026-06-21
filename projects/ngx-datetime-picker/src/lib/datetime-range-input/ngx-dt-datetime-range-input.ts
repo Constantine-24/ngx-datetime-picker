@@ -26,6 +26,8 @@ import {
   type NgxDtPickerRangeInput,
 } from '../picker/ngx-dt-picker';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { resolveHourCycle } from '../util/hour-cycle';
 
 /** I/O contract one end (start/end input) exposes to the container. */
 interface NgxDtDateTimeRangePart<T> {
@@ -275,6 +277,8 @@ export abstract class NgxDtDateTimeRangePartBase<T = unknown>
   protected readonly adapter = inject<NgxDtDateTimeAdapter<T>>(NgxDtDateTimeAdapter);
   protected readonly parent =
     inject<NgxDtDateTimeRangeInput<T>>(NgxDtDateTimeRangeInput);
+  protected readonly locale =
+    (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
   protected readonly _disabled = signal(false);
   _lastValueValid = true;
@@ -315,8 +319,23 @@ export abstract class NgxDtDateTimeRangePartBase<T = unknown>
 
   formatValue(value: T | null): void {
     this.elementRef.nativeElement.value =
-      value && this.adapter.isValid(value) ? this.adapter.format(value) : '';
+      value && this.adapter.isValid(value)
+        ? this.adapter.format(value, this._displayOptions())
+        : '';
   }
+
+  private _displayOptions(): Intl.DateTimeFormatOptions {
+    const cycle = resolveHourCycle(this.parent.picker().hourCycle(), this.locale);
+    return {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: cycle === 12,
+    };
+  }
+
   setDisabled(isDisabled: boolean): void {
     this._disabled.set(isDisabled);
   }

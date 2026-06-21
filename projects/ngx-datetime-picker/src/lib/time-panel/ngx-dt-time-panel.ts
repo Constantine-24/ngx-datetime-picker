@@ -2,6 +2,7 @@ import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { Component, computed, inject, input, model } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { NgxDtTimeAdapter } from '../time/ngx-dt-time-adapter';
+import { resolveHourCycle } from '../util/hour-cycle';
 
 type TimeField = 'hour' | 'minute' | 'second';
 interface TimeParts {
@@ -281,27 +282,15 @@ export class NgxDtTimePanel<T = unknown> {
   readonly ariaLabel = input('Choose a time');
   readonly hourCycle = input<12 | 24 | null>(null);
 
-  protected readonly effectiveHourCycle = computed<12 | 24>(() => {
-    // `hourCycle` is the explicit opt-in. When unset we derive the cycle purely
-    // from the resolved locale (`MAT_DATE_LOCALE`, defaulting to `'en-US'`),
-    // matching Material's `MatTimepicker` locale-aware behaviour.
-    const explicit = this.hourCycle();
-    if (explicit != null) return explicit;
-    return this.localeUses12Hour() ? 12 : 24;
-  });
+  protected readonly effectiveHourCycle = computed<12 | 24>(() =>
+    resolveHourCycle(this.hourCycle(), this.locale),
+  );
 
   protected readonly meridiem = computed<'AM' | 'PM' | null>(() => {
     const p = this.parts();
     if (!p) return null;
     return p.hour < 12 ? 'AM' : 'PM';
   });
-
-  private localeUses12Hour(): boolean {
-    return (
-      new Intl.DateTimeFormat(this.locale, { hour: 'numeric' }).resolvedOptions()
-        .hour12 === true
-    );
-  }
 
   /** Components of the current value, or null when unset/invalid. */
   protected readonly parts = computed<TimeParts | null>(() => {
