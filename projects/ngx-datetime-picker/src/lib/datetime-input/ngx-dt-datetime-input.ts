@@ -83,11 +83,12 @@ export class NgxDtDateTimeInput<T = unknown>
   protected _onValidatorChange: () => void = () => {};
 
   constructor() {
-    // The picker holds min/max; re-run validation when they change.
+    // The picker holds min/max/dateFilter; re-run validation when they change.
     effect(() => {
       const picker = this.picker();
       picker.min();
       picker.max();
+      picker.dateFilter();
       this._onValidatorChange();
     });
   }
@@ -135,6 +136,11 @@ export class NgxDtDateTimeInput<T = unknown>
     const max = picker.max();
     if (max && this.adapter.compareDateTime(max, value) < 0) {
       return { ngxDtMax: { max, actual: value } };
+    }
+    // The calendar filters dates, so evaluate the predicate on the date part.
+    const datePart = this.adapter.getDate(value) as unknown as T;
+    if (!picker.dateFilter()(datePart)) {
+      return { ngxDtFilter: true };
     }
     return null;
   }
