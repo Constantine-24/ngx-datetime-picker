@@ -19,6 +19,17 @@ class ToggleHost {
   value = signal<Temporal.PlainDate | null>(null);
 }
 
+@Component({
+  imports: [NgxDtPicker, NgxDtToggle],
+  template: `
+    <ngx-dt-toggle [for]="picker" [disabled]="true" />
+    <ngx-dt-picker #picker="ngxDtPicker" [(value)]="value" />
+  `,
+})
+class ToggleHostDisabled {
+  value = signal<Temporal.PlainDate | null>(null);
+}
+
 function setup() {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
@@ -57,5 +68,12 @@ describe('NgxDtToggle', () => {
       document.querySelector('.cdk-overlay-container .ngx-dt-panel'),
     ).toBeTruthy();
     expect(button(fixture).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('reflects the disabled state on the button', async () => {
+    const fixture = TestBed.createComponent(ToggleHostDisabled);
+    await fixture.whenStable();
+    const btn = fixture.nativeElement.querySelector('.ngx-dt-toggle-button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
   });
 });
