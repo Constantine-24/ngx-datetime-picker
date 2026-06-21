@@ -224,27 +224,46 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
               </div>
             </div>
           }
-          @if (isAnyDateTime()) {
-            <div class="ngx-dt-actions" role="group" aria-label="Datetime actions">
-              <button
-                type="button"
-                class="ngx-dt-action"
-                data-testid="dt-now"
-                [disabled]="disabled()"
-                (click)="onNowClick()"
-              >
-                Now
-              </button>
-              <button
-                type="button"
-                class="ngx-dt-action"
-                data-testid="dt-clear"
-                [disabled]="disabled()"
-                (click)="onClearClick()"
-              >
-                Clear
-              </button>
-              @if (!inline()) {
+          @if (showFooter()) {
+            <div class="ngx-dt-actions" role="group" aria-label="Actions">
+              @if (isAnyDateTime()) {
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-now"
+                  [disabled]="disabled()"
+                  (click)="onNowClick()"
+                >
+                  Now
+                </button>
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-clear"
+                  [disabled]="disabled()"
+                  (click)="onClearClick()"
+                >
+                  Clear
+                </button>
+              }
+              @if (draftMode() && !inline()) {
+                <button
+                  type="button"
+                  class="ngx-dt-action"
+                  data-testid="dt-cancel"
+                  (click)="onCancelClick()"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="ngx-dt-action ngx-dt-action-primary"
+                  data-testid="dt-apply"
+                  (click)="onApplyClick()"
+                >
+                  Apply
+                </button>
+              } @else if (isAnyDateTime() && !inline()) {
                 <button
                   type="button"
                   class="ngx-dt-action ngx-dt-action-primary"
@@ -377,6 +396,7 @@ export class NgxDtPicker<D = unknown> {
   readonly max = input<D | null>(null);
   readonly dateFilter = input<(date: D) => boolean>(() => true);
   readonly monthsToDisplay = input<1 | 2>(1);
+  readonly draftMode = input(false);
   readonly disabled = input(false);
   readonly hasBackdrop = input(this.options.hasBackdrop);
   readonly restoreFocus = input(this.options.restoreFocus);
@@ -410,6 +430,11 @@ export class NgxDtPicker<D = unknown> {
     () => this.isDateTime() || this.isDateTimeRange(),
   );
 
+  /** Footer renders for datetime variants (Now/Clear) and/or draft mode (Apply/Cancel). */
+  protected readonly showFooter = computed(
+    () => this.isAnyDateTime() || (this.draftMode() && !this.inline()),
+  );
+
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
   readonly closed = output<void>();
@@ -419,6 +444,10 @@ export class NgxDtPicker<D = unknown> {
   private readonly _open = signal(false);
   /** Whether the overlay is currently open. */
   readonly isOpen = this._open.asReadonly();
+
+  private readonly _draftActive = signal(false);
+  private readonly _draftValue = signal<D | null>(null);
+  private readonly _draftRange = signal<DateRange<D> | null>(null);
 
   private readonly _origin = signal<NgxDtOrigin | null>(null);
   protected readonly origin = this._origin.asReadonly();
@@ -437,8 +466,9 @@ export class NgxDtPicker<D = unknown> {
     this._input.set(input);
   }
 
-  /** Value shown by the calendar: the registered input's value, else the model value. */
+  /** Value shown by the calendar: the draft while drafting, the registered input's value, else the model value. */
   protected readonly displayValue = computed<D | null>(() => {
+    if (this._draftActive()) return this._draftValue();
     const input = this._input();
     return input ? input.value() : this.value();
   });
@@ -457,8 +487,9 @@ export class NgxDtPicker<D = unknown> {
     this._rangeInput.set(input);
   }
 
-  /** Range shown by the calendar: the registered range input's value, else the model. */
+  /** Range shown by the calendar: the draft while drafting, the registered range input's value, else the model. */
   protected readonly rangeDisplayValue = computed<DateRange<D> | null>(() => {
+    if (this._draftActive()) return this._draftRange();
     const input = this._rangeInput();
     return input ? input.range() : this.range();
   });
@@ -711,6 +742,13 @@ export class NgxDtPicker<D = unknown> {
       return; // overlay requires an anchor element
     }
     this._origin.set(anchor);
+    if (this.draftMode()) {
+      this._draftValue.set(this._input() ? this._input()!.value() : this.value());
+      this._draftRange.set(
+        this._rangeInput() ? this._rangeInput()!.range() : this.range(),
+      );
+      this._draftActive.set(true);
+    }
     this._open.set(true);
     this.openedChange.emit(true);
     this.opened.emit();
@@ -721,6 +759,7 @@ export class NgxDtPicker<D = unknown> {
     if (!this._open()) {
       return;
     }
+    this._draftActive.set(false); // discard any uncommitted draft
     this._open.set(false);
     this.openedChange.emit(false);
     this.closed.emit();
@@ -733,8 +772,12 @@ export class NgxDtPicker<D = unknown> {
     this._open() ? this.close() : this.open(origin);
   }
 
-  /** Write a value through the registered input seam, else the model. */
+  /** Write a value through the registered input seam, else the model. Buffers into draft when draft is active. */
   private commitValue(value: D | null): void {
+    if (this._draftActive()) {
+      this._draftValue.set(value);
+      return;
+    }
     const input = this._input();
     if (input) {
       input.setValueFromPicker(value);
@@ -743,8 +786,12 @@ export class NgxDtPicker<D = unknown> {
     }
   }
 
-  /** Write a range through the registered range input seam, else the model. */
+  /** Write a range through the registered range input seam, else the model. Buffers into draft when draft is active. */
   private commitRange(range: DateRange<D>): void {
+    if (this._draftActive()) {
+      this._draftRange.set(range);
+      return;
+    }
     const input = this._rangeInput();
     if (input) {
       input.setRangeFromPicker(range);
@@ -768,7 +815,7 @@ export class NgxDtPicker<D = unknown> {
       return; // datetime stays open — the time still needs setting
     }
     this.commitValue(date);
-    if (!this.inline()) {
+    if (!this.inline() && !this._draftActive()) {
       this.close();
     }
   }
@@ -820,7 +867,7 @@ export class NgxDtPicker<D = unknown> {
     const current = this.rangeDisplayValue() ?? this._emptyRange;
     const next = strategy.selectionFinished(event.value, current, event.event);
     this.commitRange(next);
-    if (!this.inline() && next.start !== null && next.end !== null) {
+    if (!this.inline() && !this._draftActive() && next.start !== null && next.end !== null) {
       this.close();
     }
   }
@@ -890,6 +937,22 @@ export class NgxDtPicker<D = unknown> {
 
   protected onDoneClick(): void {
     this.close();
+  }
+
+  protected onApplyClick(): void {
+    if (this._draftActive()) {
+      this._draftActive.set(false); // deactivate first so commit writes the real sink
+      if (this.calendarRangeMode()) {
+        this.commitRange(this._draftRange() ?? this._emptyRange);
+      } else {
+        this.commitValue(this._draftValue());
+      }
+    }
+    this.close();
+  }
+
+  protected onCancelClick(): void {
+    this.close(); // close() already discards the draft
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {
