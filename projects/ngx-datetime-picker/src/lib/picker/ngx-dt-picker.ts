@@ -119,7 +119,7 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           [ariaLabel]="ariaLabel()"
         />
       } @else {
-        <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isDateTime()">
+        <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isAnyDateTime()">
           <mat-calendar
             [startAt]="effectiveStartAt()"
             [startView]="startView()"
@@ -142,6 +142,40 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
               [disabled]="disabled()"
               ariaLabel="Choose a time"
             />
+          }
+          @if (isDateTimeRange()) {
+            <div class="ngx-dt-range-times">
+              <div class="ngx-dt-range-time">
+                <span class="ngx-dt-range-time-label">Start time</span>
+                <ngx-dt-time-panel
+                  [value]="startTimePanelValue()"
+                  (valueChange)="onStartTimeChange($event)"
+                  [min]="startTimePanelMin()"
+                  [max]="startTimePanelMax()"
+                  [hourCycle]="hourCycle()"
+                  [minuteStep]="minuteStep()"
+                  [showSeconds]="showSeconds()"
+                  [disabled]="disabled()"
+                  ariaLabel="Choose a start time"
+                />
+              </div>
+              <div class="ngx-dt-range-time">
+                <span class="ngx-dt-range-time-label">End time</span>
+                <ngx-dt-time-panel
+                  [value]="endTimePanelValue()"
+                  (valueChange)="onEndTimeChange($event)"
+                  [min]="endTimePanelMin()"
+                  [max]="endTimePanelMax()"
+                  [hourCycle]="hourCycle()"
+                  [minuteStep]="minuteStep()"
+                  [showSeconds]="showSeconds()"
+                  [disabled]="disabled()"
+                  ariaLabel="Choose an end time"
+                />
+              </div>
+            </div>
+          }
+          @if (isAnyDateTime()) {
             <div class="ngx-dt-actions" role="group" aria-label="Datetime actions">
               <button
                 type="button"
@@ -183,6 +217,20 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         display: flex;
         flex-direction: column;
         align-items: stretch;
+      }
+      .ngx-dt-range-times {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .ngx-dt-range-time {
+        display: flex;
+        flex-direction: column;
+      }
+      .ngx-dt-range-time-label {
+        padding: 0 8px;
+        font: var(--mat-sys-label-small, inherit);
+        color: var(--mat-sys-on-surface-variant, inherit);
       }
       .ngx-dt-actions {
         display: flex;
@@ -379,18 +427,26 @@ export class NgxDtPicker<D = unknown> {
   });
 
   /**
-   * Time-panel floor: the min's time, but only on the min's day. On any later
-   * day there is no time floor. In pure-time mode the picker `min` is itself a
-   * time. (`max` is symmetric.)
+   * The bound's time (as `D` for the time-panel binding) iff `v` falls on the
+   * bound's calendar day, else null. `null` bounds/values yield null.
    */
-  private boundaryTime(bound: D | null): D | null {
-    if (!this.isDateTime()) return null;
+  private boundOnDay(v: D | null, bound: D | null): D | null {
     const dt = this.dtAdapter;
-    const v = this.displayValue();
-    if (!dt || bound == null || v == null || !dt.isValid(bound) || !dt.isValid(v)) {
+    if (!dt || v == null || bound == null || !dt.isValid(v) || !dt.isValid(bound)) {
       return null;
     }
-    return dt.compareDate(v, bound) === 0 ? (dt.getTime(bound) as unknown as D) : null;
+    return dt.compareDate(v, bound) === 0
+      ? (dt.getTime(bound) as unknown as D)
+      : null;
+  }
+
+  /**
+   * Time-panel floor for the single-datetime variant: the bound's time only on
+   * the bound's day (anchored to the current value). In pure-time mode the
+   * caller uses `min()`/`max()` directly.
+   */
+  private boundaryTime(bound: D | null): D | null {
+    return this.boundOnDay(this.displayValue(), bound);
   }
 
   protected readonly timePanelMin = computed<D | null>(() =>
@@ -398,6 +454,81 @@ export class NgxDtPicker<D = unknown> {
   );
   protected readonly timePanelMax = computed<D | null>(() =>
     this.isTime() ? this.max() : this.boundaryTime(this.max()),
+  );
+
+  /** Time part (cast as `D` for the time-panel binding) of a datetime value. */
+  private timePartOf(value: D | null): D | null {
+    const dt = this.dtAdapter;
+    return dt && value != null && dt.isValid(value)
+      ? (dt.getTime(value) as unknown as D)
+      : null;
+  }
+
+  /** Whether two datetime values fall on the same calendar day. */
+  private sameDay(a: D | null, b: D | null): boolean {
+    const dt = this.dtAdapter;
+    return (
+      !!dt &&
+      a != null &&
+      b != null &&
+      dt.isValid(a) &&
+      dt.isValid(b) &&
+      dt.compareDate(a, b) === 0
+    );
+  }
+
+  /** The earlier of two times (null = unbounded). */
+  private earlierTime(a: D | null, b: D | null): D | null {
+    const dt = this.dtAdapter;
+    if (a == null) return b;
+    if (b == null) return a;
+    if (!dt) return a;
+    return dt.compareTime(a, b) <= 0 ? a : b;
+  }
+
+  /** The later of two times (null = unbounded). */
+  private laterTime(a: D | null, b: D | null): D | null {
+    const dt = this.dtAdapter;
+    if (a == null) return b;
+    if (b == null) return a;
+    if (!dt) return a;
+    return dt.compareTime(a, b) >= 0 ? a : b;
+  }
+
+  protected readonly startTimePanelValue = computed<D | null>(() =>
+    this.timePartOf(this.rangeDisplayValue()?.start ?? null),
+  );
+  protected readonly endTimePanelValue = computed<D | null>(() =>
+    this.timePartOf(this.rangeDisplayValue()?.end ?? null),
+  );
+
+  // Start panel: floor from the picker min on the start's day; ceiling is the
+  // earlier of the picker max (on the start's day) and the end time on a shared
+  // day — so the start can never be pushed past the end.
+  protected readonly startTimePanelMin = computed<D | null>(() =>
+    this.boundOnDay(this.rangeDisplayValue()?.start ?? null, this.min()),
+  );
+  protected readonly startTimePanelMax = computed<D | null>(() => {
+    const r = this.rangeDisplayValue();
+    const start = r?.start ?? null;
+    const end = r?.end ?? null;
+    const pickerCeil = this.boundOnDay(start, this.max());
+    const sameDayEnd = this.sameDay(start, end) ? this.timePartOf(end) : null;
+    return this.earlierTime(pickerCeil, sameDayEnd);
+  });
+
+  // End panel: ceiling from the picker max on the end's day; floor is the later
+  // of the picker min (on the end's day) and the start time on a shared day.
+  protected readonly endTimePanelMin = computed<D | null>(() => {
+    const r = this.rangeDisplayValue();
+    const start = r?.start ?? null;
+    const end = r?.end ?? null;
+    const pickerFloor = this.boundOnDay(end, this.min());
+    const sameDayStart = this.sameDay(start, end) ? this.timePartOf(start) : null;
+    return this.laterTime(pickerFloor, sameDayStart);
+  });
+  protected readonly endTimePanelMax = computed<D | null>(() =>
+    this.boundOnDay(this.rangeDisplayValue()?.end ?? null, this.max()),
   );
 
   protected readonly effectiveStartAt = computed(() => {
@@ -567,13 +698,52 @@ export class NgxDtPicker<D = unknown> {
     this.commitValue(time); // pure time mode
   }
 
+  protected onStartTimeChange(time: D | null): void {
+    if (!this.isDateTimeRange()) return;
+    const dt = this.dtAdapter;
+    if (!dt) return;
+    const r = this.rangeDisplayValue() ?? this._emptyRange;
+    const start =
+      time == null
+        ? null
+        : dt.clampDateTime(dt.withTime(r.start, time), this.min(), this.max());
+    this.commitRange(new DateRange<D>(start, r.end));
+  }
+
+  protected onEndTimeChange(time: D | null): void {
+    if (!this.isDateTimeRange()) return;
+    const dt = this.dtAdapter;
+    if (!dt) return;
+    const r = this.rangeDisplayValue() ?? this._emptyRange;
+    const end =
+      time == null
+        ? null
+        : dt.clampDateTime(dt.withTime(r.end, time), this.min(), this.max());
+    this.commitRange(new DateRange<D>(r.start, end));
+  }
+
   protected onNowClick(): void {
     const dt = this.dtAdapter;
     if (!dt) return;
-    this.commitValue(dt.clampDateTime(dt.now(), this.min(), this.max()));
+    const now = dt.clampDateTime(dt.now(), this.min(), this.max());
+    if (this.isDateTimeRange()) {
+      const r = this.rangeDisplayValue() ?? this._emptyRange;
+      if (r.start == null) {
+        this.commitRange(new DateRange<D>(now, r.end));
+      } else if (r.end == null) {
+        this.commitRange(new DateRange<D>(r.start, now));
+      }
+      // both ends already set -> no-op
+      return;
+    }
+    this.commitValue(now);
   }
 
   protected onClearClick(): void {
+    if (this.isDateTimeRange()) {
+      this.commitRange(this._emptyRange);
+      return;
+    }
     this.commitValue(null);
   }
 
