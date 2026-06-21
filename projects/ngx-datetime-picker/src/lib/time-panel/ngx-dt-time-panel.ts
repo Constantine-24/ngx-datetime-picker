@@ -326,6 +326,8 @@ export class NgxDtTimePanel<T = unknown> {
 
   // --- field stepping / typing ---------------------------------------------
 
+  // Skip loop is bounded by the field cycle (24 for hour, 60 for minute/second);
+  // a candidate pinned by clampTime to a filtered boundary yields no change.
   protected step(field: TimeField, direction: number): void {
     if (this.disabled()) return;
     const unit = field === 'minute' ? this.minuteStep() : 1;
@@ -364,6 +366,18 @@ export class NgxDtTimePanel<T = unknown> {
     } else if (event.key === 'Enter') {
       event.preventDefault();
       this.commitField(field, event);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      this.setFieldAbsolute(field, 0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      this.setFieldAbsolute(field, field === 'hour' ? 23 : 59);
+    } else if (event.key === 'PageUp') {
+      event.preventDefault();
+      this.step(field, 5);
+    } else if (event.key === 'PageDown') {
+      event.preventDefault();
+      this.step(field, -5);
     }
   }
 
@@ -400,6 +414,12 @@ export class NgxDtTimePanel<T = unknown> {
       this.value.set(clamped);
       void this.live.announce(this.announceText(clamped), 'polite');
     }
+  }
+
+  /** Absolute set of a field to a raw value (clamped/cycle-aware via setField). */
+  private setFieldAbsolute(field: TimeField, raw: number): void {
+    if (this.disabled()) return;
+    this.commit((p) => this.setField(p, field, raw));
   }
 
   /** Seed editing when value is null: "now" clamped into `[min, max]`. */
