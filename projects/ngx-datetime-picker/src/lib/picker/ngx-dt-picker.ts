@@ -24,9 +24,10 @@ import {
 } from '@angular/material/datepicker';
 import { NGX_DT_DEFAULT_OPTIONS } from '../tokens';
 import { NgxDtTimePanel } from '../time-panel/ngx-dt-time-panel';
+import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
 
-/** Picker variants. `date`, `date-range`, and `time` are implemented. */
-export type NgxDtPickerType = 'date' | 'date-range' | 'time';
+/** Picker variants. `date`, `date-range`, `time`, and `datetime` are implemented. */
+export type NgxDtPickerType = 'date' | 'date-range' | 'time' | 'datetime';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
@@ -102,10 +103,10 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
     <ng-template #panel>
       @if (isTime()) {
         <ngx-dt-time-panel
-          [value]="displayValue()"
+          [value]="timePanelValue()"
           (valueChange)="onTimeChange($event)"
-          [min]="min()"
-          [max]="max()"
+          [min]="timePanelMin()"
+          [max]="timePanelMax()"
           [hourCycle]="hourCycle()"
           [minuteStep]="minuteStep()"
           [showSeconds]="showSeconds()"
@@ -113,19 +114,43 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
           [ariaLabel]="ariaLabel()"
         />
       } @else {
-        <mat-calendar
-          [startAt]="effectiveStartAt()"
-          [startView]="startView()"
-          [selected]="calendarSelection()"
-          [minDate]="min()"
-          [maxDate]="max()"
-          [dateFilter]="dateFilter()"
-          (selectedChange)="onSelectedChange($event)"
-          (_userSelection)="onUserSelection($event)"
-        />
+        <div class="ngx-dt-body" [class.ngx-dt-body-datetime]="isDateTime()">
+          <mat-calendar
+            [startAt]="effectiveStartAt()"
+            [startView]="startView()"
+            [selected]="calendarSelection()"
+            [minDate]="calendarMin()"
+            [maxDate]="calendarMax()"
+            [dateFilter]="dateFilter()"
+            (selectedChange)="onSelectedChange($event)"
+            (_userSelection)="onUserSelection($event)"
+          />
+          @if (isDateTime()) {
+            <ngx-dt-time-panel
+              [value]="timePanelValue()"
+              (valueChange)="onTimeChange($event)"
+              [min]="timePanelMin()"
+              [max]="timePanelMax()"
+              [hourCycle]="hourCycle()"
+              [minuteStep]="minuteStep()"
+              [showSeconds]="showSeconds()"
+              [disabled]="disabled()"
+              ariaLabel="Choose a time"
+            />
+          }
+        </div>
       }
     </ng-template>
   `,
+  styles: [
+    `
+      .ngx-dt-body-datetime {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+    `,
+  ],
   host: { class: 'ngx-dt-picker' },
   providers: [
     {
@@ -136,6 +161,9 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
 })
 export class NgxDtPicker<D = unknown> {
   private readonly adapter = inject<DateAdapter<D>>(DateAdapter, { optional: true });
+  private readonly dtAdapter = inject<NgxDtDateTimeAdapter<D>>(NgxDtDateTimeAdapter, {
+    optional: true,
+  });
   private readonly injector = inject(Injector);
   private readonly options = inject(NGX_DT_DEFAULT_OPTIONS);
   private readonly _emptyRange = new DateRange<D>(null, null);
@@ -166,6 +194,7 @@ export class NgxDtPicker<D = unknown> {
   readonly showSeconds = input(false);
 
   readonly isTime = computed(() => this.type() === 'time');
+  readonly isDateTime = computed(() => this.type() === 'datetime');
 
   readonly openedChange = output<boolean>();
   readonly opened = output<void>();
@@ -220,13 +249,54 @@ export class NgxDtPicker<D = unknown> {
     return input ? input.range() : this.range();
   });
 
-  /** What the calendar's `[selected]` binds to — a range or a single date. */
+  /**
+   * The date part of a datetime value, cast to `D` for the loosely-typed
+   * MatCalendar bindings. (In datetime mode the calendar is backed by the
+   * PlainDate DateAdapter, so a date part is what it actually consumes.)
+   */
+  private datePart(value: D | null): D | null {
+    const dt = this.dtAdapter;
+    return dt && value != null && dt.isValid(value)
+      ? (dt.getDate(value) as unknown as D)
+      : null;
+  }
+
+  /** What the calendar's `[selected]` binds to — a range, a date, or a date part. */
   protected readonly calendarSelection = computed<DateRange<D> | D | null>(() => {
     if (this.isRange()) {
       return this.rangeDisplayValue() ?? this._emptyRange;
     }
+    if (this.isDateTime()) {
+      return this.datePart(this.displayValue());
+    }
     return this.displayValue();
   });
+
+  /** Calendar `[minDate]`/`[maxDate]` — date parts in datetime mode. */
+  protected readonly calendarMin = computed<D | null>(() =>
+    this.isDateTime() ? this.datePart(this.min()) : this.min(),
+  );
+  protected readonly calendarMax = computed<D | null>(() =>
+    this.isDateTime() ? this.datePart(this.max()) : this.max(),
+  );
+
+  /** Value bound to the time panel — the time part in datetime mode, else the value. */
+  protected readonly timePanelValue = computed<D | null>(() => {
+    if (this.isDateTime()) {
+      const dt = this.dtAdapter;
+      const v = this.displayValue();
+      return dt && v != null && dt.isValid(v) ? (dt.getTime(v) as unknown as D) : null;
+    }
+    return this.displayValue();
+  });
+
+  // Replaced with boundary-aware logic in Task 4.
+  protected readonly timePanelMin = computed<D | null>(() =>
+    this.isTime() ? this.min() : null,
+  );
+  protected readonly timePanelMax = computed<D | null>(() =>
+    this.isTime() ? this.max() : null,
+  );
 
   protected readonly effectiveStartAt = computed(() => {
     const adapter = this.adapter;
@@ -235,8 +305,11 @@ export class NgxDtPicker<D = unknown> {
     }
     const anchor = this.isRange()
       ? (this.rangeDisplayValue()?.start ?? null)
-      : this.displayValue();
-    return anchor ?? this.startAt() ?? adapter.today();
+      : this.isDateTime()
+        ? this.datePart(this.displayValue())
+        : this.displayValue();
+    const startAt = this.isDateTime() ? this.datePart(this.startAt()) : this.startAt();
+    return anchor ?? startAt ?? adapter.today();
   });
 
   /** Open the overlay anchored to `origin`. No-op if disabled, inline, or already open. */
@@ -279,16 +352,31 @@ export class NgxDtPicker<D = unknown> {
     this._open() ? this.close() : this.open(origin);
   }
 
+  /** Write a value through the registered input seam, else the model. */
+  private commitValue(value: D | null): void {
+    const input = this._input();
+    if (input) {
+      input.setValueFromPicker(value);
+    } else {
+      this.value.set(value);
+    }
+  }
+
   protected onSelectedChange(date: D | null): void {
     if (this.isRange()) {
       return; // range selection is handled via (_userSelection)
     }
-    const input = this._input();
-    if (input) {
-      input.setValueFromPicker(date);
-    } else {
-      this.value.set(date);
+    if (this.isDateTime()) {
+      const dt = this.dtAdapter;
+      if (!dt) return;
+      const next =
+        date == null
+          ? null
+          : dt.clampDateTime(dt.withDate(this.displayValue(), date), this.min(), this.max());
+      this.commitValue(next);
+      return; // datetime stays open — the time still needs setting
     }
+    this.commitValue(date);
     if (!this.inline()) {
       this.close();
     }
@@ -315,13 +403,17 @@ export class NgxDtPicker<D = unknown> {
   }
 
   protected onTimeChange(time: D | null): void {
-    const input = this._input();
-    if (input) {
-      input.setValueFromPicker(time);
-    } else {
-      this.value.set(time);
+    if (this.isDateTime()) {
+      const dt = this.dtAdapter;
+      if (!dt) return;
+      const next =
+        time == null
+          ? null
+          : dt.clampDateTime(dt.withTime(this.displayValue(), time), this.min(), this.max());
+      this.commitValue(next);
+      return; // never auto-close
     }
-    // Time editing is continuous — never auto-close.
+    this.commitValue(time); // pure time mode
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {
