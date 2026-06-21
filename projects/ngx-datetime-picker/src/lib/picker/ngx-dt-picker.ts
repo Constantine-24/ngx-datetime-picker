@@ -137,6 +137,36 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
               [disabled]="disabled()"
               ariaLabel="Choose a time"
             />
+            <div class="ngx-dt-actions" role="group" aria-label="Datetime actions">
+              <button
+                type="button"
+                class="ngx-dt-action"
+                data-testid="dt-now"
+                [disabled]="disabled()"
+                (click)="onNowClick()"
+              >
+                Now
+              </button>
+              <button
+                type="button"
+                class="ngx-dt-action"
+                data-testid="dt-clear"
+                [disabled]="disabled()"
+                (click)="onClearClick()"
+              >
+                Clear
+              </button>
+              @if (!inline()) {
+                <button
+                  type="button"
+                  class="ngx-dt-action ngx-dt-action-primary"
+                  data-testid="dt-done"
+                  (click)="onDoneClick()"
+                >
+                  Done
+                </button>
+              }
+            </div>
           }
         </div>
       }
@@ -148,6 +178,39 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
         display: flex;
         flex-direction: column;
         align-items: stretch;
+      }
+      .ngx-dt-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 8px;
+      }
+      .ngx-dt-action {
+        min-height: 32px;
+        min-width: 48px;
+        padding: 4px 12px;
+        border: 1px solid var(--mat-sys-outline, currentColor);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--mat-sys-on-surface, inherit);
+        font: inherit;
+        cursor: pointer;
+      }
+      .ngx-dt-action:hover:not([disabled]) {
+        background: var(--mat-sys-surface-container-high, transparent);
+      }
+      .ngx-dt-action:focus-visible {
+        outline: 2px solid var(--mat-sys-primary, Highlight);
+        outline-offset: 1px;
+      }
+      .ngx-dt-action[disabled] {
+        opacity: 0.38;
+        cursor: default;
+      }
+      .ngx-dt-action-primary {
+        background: var(--mat-sys-primary, Highlight);
+        color: var(--mat-sys-on-primary, HighlightText);
+        border-color: transparent;
       }
     `,
   ],
@@ -428,6 +491,20 @@ export class NgxDtPicker<D = unknown> {
       return; // never auto-close
     }
     this.commitValue(time); // pure time mode
+  }
+
+  protected onNowClick(): void {
+    const dt = this.dtAdapter;
+    if (!dt) return;
+    this.commitValue(dt.clampDateTime(dt.now(), this.min(), this.max()));
+  }
+
+  protected onClearClick(): void {
+    this.commitValue(null);
+  }
+
+  protected onDoneClick(): void {
+    this.close();
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {

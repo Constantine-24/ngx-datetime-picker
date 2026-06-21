@@ -787,4 +787,55 @@ describe('NgxDtPicker — datetime mode', () => {
     expect(internals.timePanelMin()).toBeNull();
     expect(internals.timePanelMax()).toBeNull();
   });
+
+  it('Now sets the value to a datetime and keeps the panel open', async () => {
+    const fixture = TestBed.createComponent(OverlayDateTimeHost);
+    fixture.detectChanges();
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    document
+      .querySelector<HTMLButtonElement>('.cdk-overlay-container [data-testid="dt-now"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDateTime);
+    expect(fixture.componentInstance.picker().isOpen()).toBe(true);
+  });
+
+  it('Clear sets the value to null', async () => {
+    const fixture = TestBed.createComponent(InlineDateTimeHost);
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T09:30'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="dt-clear"]')!
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBeNull();
+  });
+
+  it('Done closes the overlay; it is absent inline', async () => {
+    const overlay = TestBed.createComponent(OverlayDateTimeHost);
+    overlay.detectChanges();
+    overlay.componentInstance.picker().open(overlay.componentInstance.trigger());
+    overlay.detectChanges();
+    await overlay.whenStable();
+    const done = document.querySelector<HTMLButtonElement>(
+      '.cdk-overlay-container [data-testid="dt-done"]',
+    )!;
+    expect(done).toBeTruthy();
+    done.click();
+    overlay.detectChanges();
+    await overlay.whenStable();
+    expect(overlay.componentInstance.picker().isOpen()).toBe(false);
+
+    const inline = TestBed.createComponent(InlineDateTimeHost);
+    inline.detectChanges();
+    await inline.whenStable();
+    expect(
+      (inline.nativeElement as HTMLElement).querySelector('[data-testid="dt-done"]'),
+    ).toBeNull();
+  });
 });
