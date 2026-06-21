@@ -1,59 +1,15 @@
-# DateTimePicker
+# ngx-datetime-picker workspace
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.3.
+An Angular 22 workspace containing the **ngx-datetime-picker** library and an interactive demo application.
 
-## Development server
+The library provides a configurable date/time picker built on `@angular/cdk` and `@angular/material`, with a TC39 Temporal adapter as the flagship default. It ships five variants: date, date-range, time, datetime, and datetime-range.
 
-To start a local development server, run:
+See [`projects/ngx-datetime-picker/README.md`](projects/ngx-datetime-picker/README.md) for full library documentation including entry points, providers, per-variant usage snippets, picker inputs, forms integration, theming, accessibility, and RTL support.
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Running the demo
 
 ```bash
-ng generate component component-name
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Then open `http://localhost:4200` in your browser.
