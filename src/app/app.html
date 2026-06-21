@@ -182,8 +182,8 @@
       #filteredPick
       type="datetime"
       [hourCycle]="12"
-      [dateFilter]="$any(weekdaysOnly)"
-      [timeFilter]="$any(businessHours)"
+      [dateFilter]="weekdaysOnly"
+      [timeFilter]="businessHours"
     />
     <p>Selected: {{ filteredCtrl.value?.toString() ?? 'none' }}</p>
   </section>
