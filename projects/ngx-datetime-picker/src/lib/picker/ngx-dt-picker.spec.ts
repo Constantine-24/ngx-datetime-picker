@@ -1402,6 +1402,38 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
       (inline.nativeElement as HTMLElement).querySelector('[data-testid="dt-done"]'),
     ).toBeNull();
   });
+
+  /** Returns the NgxDtPicker instance from an InlineDateTimeRangeHost fixture. */
+  function createDateTimeRangePicker(): NgxDtPicker<Temporal.PlainDateTime> {
+    const fixture = TestBed.createComponent(InlineDateTimeRangeHost);
+    fixture.detectChanges();
+    return fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
+  }
+
+  it('exposes symmetric start/end time-panel bounds on a shared day', async () => {
+    // datetime-range picker with a range whose start and end fall on the same day.
+    const p = createDateTimeRangePicker();
+    p.range.set(
+      new DateRange(
+        Temporal.PlainDateTime.from('2026-06-21T09:00'),
+        Temporal.PlainDateTime.from('2026-06-21T17:00'),
+      ),
+    );
+    // start ceiling is the end time; end floor is the start time (same day).
+    expect((p as any).startTimePanelMax()?.toString()).toContain('17:00');
+    expect((p as any).endTimePanelMin()?.toString()).toContain('09:00');
+  });
+
+  it('stepping a start time before any date anchors to today (intentional parity)', async () => {
+    const p = createDateTimeRangePicker();
+    p.range.set(new DateRange<Temporal.PlainDateTime>(null, null));
+    (p as any).onStartTimeChange(Temporal.PlainTime.from('08:30') as unknown as never);
+    await Promise.resolve();
+    const start = p.range()?.start;
+    expect(start).not.toBeNull();
+    expect(start!.toPlainTime().toString()).toContain('08:30');
+  });
 });
 
 // --- Plan 8 (Task 7): RTL support -----------------------------------------
@@ -1422,5 +1454,31 @@ describe('NgxDtPicker — RTL support', () => {
     await fixture.whenStable();
     const panel = fixture.nativeElement.querySelector('.ngx-dt-panel') as HTMLElement;
     expect(panel.getAttribute('dir')).toBe('rtl');
+  });
+});
+
+// --- Task 9 (deferred Minor from Task 5): dualCalendars gates on calendarRangeMode ---------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `<ngx-dt-picker [inline]="true" type="date" [monthsToDisplay]="2" />`,
+})
+class NonRangeDualHost {}
+
+describe('NgxDtPicker — non-range monthsToDisplay=2 renders one calendar', () => {
+  it('a non-range picker with monthsToDisplay=2 still renders ONE mat-calendar', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideNoopAnimations(),
+        provideTemporalDateAdapter(),
+      ],
+    });
+    const fixture = TestBed.createComponent(NonRangeDualHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // dualCalendars() gates on calendarRangeMode(); for type="date" it must be false.
+    expect(fixture.nativeElement.querySelectorAll('mat-calendar').length).toBe(1);
   });
 });

@@ -85,6 +85,23 @@ describe('NgxDtInput — value binding & parsing', () => {
     expect(el.value).toBe('6/15/2026');
   });
 
+  it('emits dateChange when the calendar selection flows into the input', async () => {
+    // Host already wires (dateChange)="changed.set($event)" and exposes
+    // input() as NgxDtInput and picker() as NgxDtPicker.
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Drive the picker -> input seam directly (as the calendar does).
+    fixture.componentInstance.input().setValueFromPicker(
+      Temporal.PlainDate.from('2026-06-21'),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.changed()?.toString()).toBe('2026-06-21');
+  });
+
   it('shows the calendar selection as formatted text (picker -> input)', async () => {
     const fixture = TestBed.createComponent(Host);
     fixture.detectChanges();
