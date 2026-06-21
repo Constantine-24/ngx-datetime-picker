@@ -753,4 +753,38 @@ describe('NgxDtPicker — datetime mode', () => {
     expect(v.hour).toBe(14);
     expect(v.minute).toBe(0);
   });
+
+  it('timePanelMin/Max expose the bound time only on the boundary day', async () => {
+    const fixture = TestBed.createComponent(ConstrainedDateTimeHost);
+    fixture.componentInstance.min.set(Temporal.PlainDateTime.from('2026-06-21T14:00'));
+    fixture.componentInstance.max.set(Temporal.PlainDateTime.from('2026-06-23T17:00'));
+    // On the min day: floor = min time; max is a different day → no ceiling.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T16:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
+    const internals = picker as unknown as {
+      timePanelMin: () => Temporal.PlainTime | null;
+      timePanelMax: () => Temporal.PlainTime | null;
+    };
+    expect(internals.timePanelMin()).toBeInstanceOf(Temporal.PlainTime);
+    expect(internals.timePanelMin()!.hour).toBe(14);
+    expect(internals.timePanelMax()).toBeNull();
+
+    // On the max day: ceiling = max time; floor disappears.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-23T10:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(internals.timePanelMin()).toBeNull();
+    expect(internals.timePanelMax()).toBeInstanceOf(Temporal.PlainTime);
+    expect(internals.timePanelMax()!.hour).toBe(17);
+
+    // On a middle day: neither bound applies.
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-22T09:00'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(internals.timePanelMin()).toBeNull();
+    expect(internals.timePanelMax()).toBeNull();
+  });
 });
