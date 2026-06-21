@@ -1112,6 +1112,80 @@ describe('NgxDtPicker — dual calendars (monthsToDisplay)', () => {
   });
 });
 
+// --- Plan 8 (Task 6): draft / Apply-Cancel mode ---------------------------
+
+@Component({
+  imports: [NgxDtPicker],
+  template: `
+    <button #trigger type="button">open</button>
+    <ngx-dt-picker #picker type="date" [draftMode]="true" [(value)]="value" />
+  `,
+})
+class DraftHost {
+  value = signal<Temporal.PlainDate | null>(null);
+  readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
+    'trigger',
+    { read: ElementRef },
+  );
+}
+
+function createDraftHost() {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    providers: [
+      provideZonelessChangeDetection(),
+      provideNoopAnimations(),
+      provideTemporalDateAdapter(),
+    ],
+  });
+  const fixture = TestBed.createComponent(DraftHost);
+  fixture.detectChanges();
+  return fixture;
+}
+
+describe('NgxDtPicker — draftMode', () => {
+  it('draftMode: selecting buffers until Apply, then commits', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    // simulate a calendar selection (date mode uses (selectedChange))
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull(); // buffered, not committed
+    (document.querySelector('[data-testid="dt-apply"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(cmp.value()?.toString()).toBe('2026-06-21');
+    expect(cmp.picker().isOpen()).toBe(false);
+  });
+
+  it('draftMode: Cancel discards the buffered selection', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    (document.querySelector('[data-testid="dt-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull();
+    expect(cmp.picker().isOpen()).toBe(false);
+  });
+
+  it('draftMode: closing via backdrop/escape discards the draft', async () => {
+    const fixture = createDraftHost();
+    const cmp = fixture.componentInstance;
+    cmp.picker().open(cmp.trigger().nativeElement);
+    await fixture.whenStable();
+    cmp.picker()['onSelectedChange'](Temporal.PlainDate.from('2026-06-21'));
+    await fixture.whenStable();
+    cmp.picker().close();
+    await fixture.whenStable();
+    expect(cmp.value()).toBeNull();
+  });
+});
+
 // --- Plan 7: datetime-range — time panels + footer -----------------------
 
 @Component({
