@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.0.1] - 2026-10-16
+
 ### Changed
 
 - Built with Angular 22.2.3 and ng-packagr 22.2.4 (previously 22.0.x). The peer
@@ -116,5 +120,6 @@ First public release: a configurable Angular date & time picker built on
   header. Use the header buttons to move both months together. This is a
   structural constraint of the underlying `MatCalendar`.
 
-[Unreleased]: https://github.com/Constantine-24/ngx-datetime-picker/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Constantine-24/ngx-datetime-picker/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Constantine-24/ngx-datetime-picker/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Constantine-24/ngx-datetime-picker/releases/tag/v1.0.0
