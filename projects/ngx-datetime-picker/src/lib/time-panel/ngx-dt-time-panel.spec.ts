@@ -104,9 +104,7 @@ describe('NgxDtTimePanel — 24h', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
-    const upHour = root.querySelector<HTMLButtonElement>(
-      '[data-testid="up-hour"]',
-    )!;
+    const upHour = root.querySelector<HTMLButtonElement>('[data-testid="up-hour"]')!;
     upHour.click();
     fixture.detectChanges();
     await fixture.whenStable();

@@ -56,9 +56,7 @@ describe('NgxDtInput — value binding & parsing', () => {
     expect(fixture.componentInstance.input().value()).toEqual(
       Temporal.PlainDate.from('2026-06-15'),
     );
-    expect(fixture.componentInstance.changed()).toEqual(
-      Temporal.PlainDate.from('2026-06-15'),
-    );
+    expect(fixture.componentInstance.changed()).toEqual(Temporal.PlainDate.from('2026-06-15'));
   });
 
   it('resolves unparseable text to null', async () => {
@@ -93,9 +91,7 @@ describe('NgxDtInput — value binding & parsing', () => {
     await fixture.whenStable();
 
     // Drive the picker -> input seam directly (as the calendar does).
-    fixture.componentInstance.input().setValueFromPicker(
-      Temporal.PlainDate.from('2026-06-21'),
-    );
+    fixture.componentInstance.input().setValueFromPicker(Temporal.PlainDate.from('2026-06-21'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -137,7 +133,9 @@ describe('NgxDtInput — keyboard open', () => {
     await fixture.whenStable();
 
     const el = inputEl(fixture);
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }));
+    el.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }),
+    );
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -180,13 +178,7 @@ describe('NgxDtInput — validators', () => {
     imports: [NgxDtInput, NgxDtPicker, ReactiveFormsModule],
     template: `
       <input [ngxDtInput]="picker" [formControl]="ctrl" />
-      <ngx-dt-picker
-        #picker
-        [inline]="true"
-        [min]="min"
-        [max]="max"
-        [dateFilter]="filter"
-      />
+      <ngx-dt-picker #picker [inline]="true" [min]="min" [max]="max" [dateFilter]="filter" />
     `,
   })
   class ValidatedHost {

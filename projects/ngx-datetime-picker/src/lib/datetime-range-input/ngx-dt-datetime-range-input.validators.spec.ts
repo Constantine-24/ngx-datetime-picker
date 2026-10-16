@@ -38,13 +38,7 @@ function setup() {
       <input ngxDtStartDateTime />
       <input ngxDtEndDateTime />
     </ngx-dt-datetime-range-input>
-    <ngx-dt-picker
-      #picker
-      [inline]="true"
-      type="datetime-range"
-      [min]="min()"
-      [max]="max"
-    />
+    <ngx-dt-picker #picker [inline]="true" type="datetime-range" [min]="min()" [max]="max" />
   `,
 })
 class ValidatedHost {
@@ -66,12 +60,7 @@ class ValidatedHost {
       <input ngxDtStartDateTime />
       <input ngxDtEndDateTime />
     </ngx-dt-datetime-range-input>
-    <ngx-dt-picker
-      #picker
-      [inline]="true"
-      type="datetime-range"
-      [dateFilter]="dateFilter()"
-    />
+    <ngx-dt-picker #picker [inline]="true" type="datetime-range" [dateFilter]="dateFilter()" />
   `,
 })
 class ValidatedHostWithFilter {
@@ -183,7 +172,11 @@ describe('NgxDtDateTimeRangeInput — validation', () => {
     setup();
     const fixture = TestBed.createComponent(ValidatedHostWithFilter);
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-25')) !== 0,
+      (d) =>
+        Temporal.PlainDate.compare(
+          d as unknown as Temporal.PlainDate,
+          Temporal.PlainDate.from('2026-06-25'),
+        ) !== 0,
     );
     await fixture.whenStable();
     const [start, end] = Array.from(
@@ -201,7 +194,11 @@ describe('NgxDtDateTimeRangeInput — validation', () => {
     setup();
     const fixture = TestBed.createComponent(ValidatedHostWithFilter);
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-25')) !== 0,
+      (d) =>
+        Temporal.PlainDate.compare(
+          d as unknown as Temporal.PlainDate,
+          Temporal.PlainDate.from('2026-06-25'),
+        ) !== 0,
     );
     await fixture.whenStable();
     const [start, end] = Array.from(

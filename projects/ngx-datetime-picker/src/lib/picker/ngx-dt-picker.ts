@@ -30,12 +30,7 @@ import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
 import { NgxDtEmptyCalendarHeader } from './ngx-dt-empty-calendar-header';
 
 /** Picker variants. All five are implemented. */
-export type NgxDtPickerType =
-  | 'date'
-  | 'date-range'
-  | 'time'
-  | 'datetime'
-  | 'datetime-range';
+export type NgxDtPickerType = 'date' | 'date-range' | 'time' | 'datetime' | 'datetime-range';
 
 /** Element the overlay anchors to. */
 export type NgxDtOrigin = ElementRef | HTMLElement;
@@ -80,7 +75,12 @@ const PICKER_POSITIONS: ConnectedPosition[] = [
   imports: [NgTemplateOutlet, OverlayModule, A11yModule, MatCalendar, NgxDtTimePanel],
   template: `
     @if (inline()) {
-      <div class="ngx-dt-panel" role="group" [attr.aria-label]="ariaLabel()" [attr.dir]="direction()">
+      <div
+        class="ngx-dt-panel"
+        role="group"
+        [attr.aria-label]="ariaLabel()"
+        [attr.dir]="direction()"
+      >
         <ng-container [ngTemplateOutlet]="panel" />
       </div>
     } @else if (origin(); as originEl) {
@@ -441,9 +441,7 @@ export class NgxDtPicker<D = unknown> {
   protected readonly direction = this._direction.asReadonly();
 
   constructor() {
-    this.dir?.change
-      .pipe(takeUntilDestroyed())
-      .subscribe((value) => this._direction.set(value));
+    this.dir?.change.pipe(takeUntilDestroyed()).subscribe((value) => this._direction.set(value));
   }
 
   readonly type = input<NgxDtPickerType>('date');
@@ -483,14 +481,10 @@ export class NgxDtPicker<D = unknown> {
   readonly isDateTimeRange = computed(() => this.type() === 'datetime-range');
 
   /** The calendar runs in range-selection mode for both range variants. */
-  readonly calendarRangeMode = computed(
-    () => this.isRange() || this.isDateTimeRange(),
-  );
+  readonly calendarRangeMode = computed(() => this.isRange() || this.isDateTimeRange());
 
   /** Either datetime variant decomposes the value into date + time parts. */
-  readonly isAnyDateTime = computed(
-    () => this.isDateTime() || this.isDateTimeRange(),
-  );
+  readonly isAnyDateTime = computed(() => this.isDateTime() || this.isDateTimeRange());
 
   /** Footer renders for datetime variants (Now/Clear) and/or draft mode (Apply/Cancel). */
   protected readonly showFooter = computed(
@@ -563,9 +557,7 @@ export class NgxDtPicker<D = unknown> {
    */
   private datePart(value: D | null): D | null {
     const dt = this.dtAdapter;
-    return dt && value != null && dt.isValid(value)
-      ? (dt.getDate(value) as unknown as D)
-      : null;
+    return dt && value != null && dt.isValid(value) ? (dt.getDate(value) as unknown as D) : null;
   }
 
   /** What the calendar's `[selected]` binds to — a range, a date, or a date part. */
@@ -577,10 +569,7 @@ export class NgxDtPicker<D = unknown> {
       // The calendar runs the PlainDate adapter, so it consumes the date parts
       // of the datetime range. `datePart` already casts via `as unknown as D`.
       const r = this.rangeDisplayValue();
-      return new DateRange<D>(
-        this.datePart(r?.start ?? null),
-        this.datePart(r?.end ?? null),
-      );
+      return new DateRange<D>(this.datePart(r?.start ?? null), this.datePart(r?.end ?? null));
     }
     if (this.isDateTime()) {
       return this.datePart(this.displayValue());
@@ -615,9 +604,7 @@ export class NgxDtPicker<D = unknown> {
     if (!dt || v == null || bound == null || !dt.isValid(v) || !dt.isValid(bound)) {
       return null;
     }
-    return dt.compareDate(v, bound) === 0
-      ? (dt.getTime(bound) as unknown as D)
-      : null;
+    return dt.compareDate(v, bound) === 0 ? (dt.getTime(bound) as unknown as D) : null;
   }
 
   /**
@@ -639,21 +626,14 @@ export class NgxDtPicker<D = unknown> {
   /** Time part (cast as `D` for the time-panel binding) of a datetime value. */
   private timePartOf(value: D | null): D | null {
     const dt = this.dtAdapter;
-    return dt && value != null && dt.isValid(value)
-      ? (dt.getTime(value) as unknown as D)
-      : null;
+    return dt && value != null && dt.isValid(value) ? (dt.getTime(value) as unknown as D) : null;
   }
 
   /** Whether two datetime values fall on the same calendar day. */
   private sameDay(a: D | null, b: D | null): boolean {
     const dt = this.dtAdapter;
     return (
-      !!dt &&
-      a != null &&
-      b != null &&
-      dt.isValid(a) &&
-      dt.isValid(b) &&
-      dt.compareDate(a, b) === 0
+      !!dt && a != null && b != null && dt.isValid(a) && dt.isValid(b) && dt.compareDate(a, b) === 0
     );
   }
 
@@ -728,9 +708,7 @@ export class NgxDtPicker<D = unknown> {
     } else {
       anchor = this.displayValue();
     }
-    const startAt = this.isAnyDateTime()
-      ? this.datePart(this.startAt())
-      : this.startAt();
+    const startAt = this.isAnyDateTime() ? this.datePart(this.startAt()) : this.startAt();
     return anchor ?? startAt ?? adapter.today();
   });
 
@@ -808,9 +786,7 @@ export class NgxDtPicker<D = unknown> {
     this._origin.set(anchor);
     if (this.draftMode()) {
       this._draftValue.set(this._input() ? this._input()!.value() : this.value());
-      this._draftRange.set(
-        this._rangeInput() ? this._rangeInput()!.range() : this.range(),
-      );
+      this._draftRange.set(this._rangeInput() ? this._rangeInput()!.range() : this.range());
       this._draftActive.set(true);
     }
     this._open.set(true);
@@ -907,27 +883,15 @@ export class NgxDtPicker<D = unknown> {
         this.datePart(current.start),
         this.datePart(current.end),
       );
-      const nextDates = strategy.selectionFinished(
-        event.value,
-        currentDates,
-        event.event,
-      );
+      const nextDates = strategy.selectionFinished(event.value, currentDates, event.event);
       const start =
         nextDates.start == null
           ? null
-          : dt.clampDateTime(
-              dt.withDate(current.start, nextDates.start),
-              this.min(),
-              this.max(),
-            );
+          : dt.clampDateTime(dt.withDate(current.start, nextDates.start), this.min(), this.max());
       const end =
         nextDates.end == null
           ? null
-          : dt.clampDateTime(
-              dt.withDate(current.end, nextDates.end),
-              this.min(),
-              this.max(),
-            );
+          : dt.clampDateTime(dt.withDate(current.end, nextDates.end), this.min(), this.max());
       this.commitRange(new DateRange<D>(start, end));
       return; // datetime-range stays open — the time still needs setting
     }
@@ -960,9 +924,7 @@ export class NgxDtPicker<D = unknown> {
     if (!dt) return;
     const r = this.rangeDisplayValue() ?? this._emptyRange;
     const start =
-      time == null
-        ? null
-        : dt.clampDateTime(dt.withTime(r.start, time), this.min(), this.max());
+      time == null ? null : dt.clampDateTime(dt.withTime(r.start, time), this.min(), this.max());
     this.commitRange(new DateRange<D>(start, r.end));
   }
 
@@ -972,9 +934,7 @@ export class NgxDtPicker<D = unknown> {
     if (!dt) return;
     const r = this.rangeDisplayValue() ?? this._emptyRange;
     const end =
-      time == null
-        ? null
-        : dt.clampDateTime(dt.withTime(r.end, time), this.min(), this.max());
+      time == null ? null : dt.clampDateTime(dt.withTime(r.end, time), this.min(), this.max());
     this.commitRange(new DateRange<D>(r.start, end));
   }
 
@@ -1024,8 +984,7 @@ export class NgxDtPicker<D = unknown> {
   }
 
   protected onOverlayKeydown(event: KeyboardEvent): void {
-    const noModifier =
-      !event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey;
+    const noModifier = !event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey;
     if (event.key === 'Escape' && noModifier) {
       event.preventDefault();
       this.close();

@@ -71,8 +71,9 @@ export class App {
   protected readonly dateTimeCtrl = new FormControl<Temporal.PlainDateTime | null>(null);
 
   // Datetime range (Reactive Forms)
-  protected readonly dateTimeRangeCtrl =
-    new FormControl<DateRange<Temporal.PlainDateTime> | null>(null);
+  protected readonly dateTimeRangeCtrl = new FormControl<DateRange<Temporal.PlainDateTime> | null>(
+    null,
+  );
 
   // Dual-calendar date range
   protected readonly dualRangeCtrl = new FormControl<DateRange<Temporal.PlainDate> | null>(null);
@@ -87,8 +88,7 @@ export class App {
   // picker's generic at `unknown` — avoiding a `$any` cast in the template — while
   // the body casts to the part the picker actually passes at runtime (the calendar
   // feeds the date part to dateFilter, the time panel feeds the time part).
-  protected readonly weekdaysOnly = (d: unknown) =>
-    (d as Temporal.PlainDate).dayOfWeek <= 5;
+  protected readonly weekdaysOnly = (d: unknown) => (d as Temporal.PlainDate).dayOfWeek <= 5;
   protected readonly businessHours = (t: unknown) => {
     const time = t as Temporal.PlainTime;
     return time.hour >= 9 && time.hour < 17;

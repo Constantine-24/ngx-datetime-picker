@@ -8,11 +8,7 @@ import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
-import {
-  NgxDtDateRangeInput,
-  NgxDtEndDate,
-  NgxDtStartDate,
-} from './ngx-dt-date-range-input';
+import { NgxDtDateRangeInput, NgxDtEndDate, NgxDtStartDate } from './ngx-dt-date-range-input';
 
 function setup() {
   TestBed.resetTestingModule();
@@ -26,13 +22,7 @@ function setup() {
 }
 
 @Component({
-  imports: [
-    NgxDtDateRangeInput,
-    NgxDtStartDate,
-    NgxDtEndDate,
-    NgxDtPicker,
-    ReactiveFormsModule,
-  ],
+  imports: [NgxDtDateRangeInput, NgxDtStartDate, NgxDtEndDate, NgxDtPicker, ReactiveFormsModule],
   template: `
     <ngx-dt-date-range-input [rangePicker]="picker" [formControl]="ctrl">
       <input ngxDtStartDate />

@@ -72,12 +72,7 @@
 
   <section>
     <h2>Time (inline, with seconds)</h2>
-    <ngx-dt-picker
-      type="time"
-      [inline]="true"
-      [(value)]="inlineTime"
-      [showSeconds]="true"
-    />
+    <ngx-dt-picker type="time" [inline]="true" [(value)]="inlineTime" [showSeconds]="true" />
     <p>Selected: {{ inlineTime()?.toString() ?? 'none' }}</p>
   </section>
 

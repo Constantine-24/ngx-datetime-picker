@@ -66,10 +66,7 @@ export class TemporalTimeAdapter extends NgxDtTimeAdapter<Temporal.PlainTime> {
     if (meridiem === 'p' && hour < 12) hour += 12;
     if (meridiem === 'a' && hour === 12) hour = 0;
     try {
-      return Temporal.PlainTime.from(
-        { hour, minute, second },
-        { overflow: 'reject' },
-      );
+      return Temporal.PlainTime.from({ hour, minute, second }, { overflow: 'reject' });
     } catch {
       return null;
     }

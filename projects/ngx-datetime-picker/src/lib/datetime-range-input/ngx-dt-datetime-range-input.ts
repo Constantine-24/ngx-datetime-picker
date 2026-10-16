@@ -20,11 +20,7 @@ import {
   type Validator,
 } from '@angular/forms';
 import { DateRange } from '@angular/material/datepicker';
-import {
-  NgxDtPicker,
-  type NgxDtOrigin,
-  type NgxDtPickerRangeInput,
-} from '../picker/ngx-dt-picker';
+import { NgxDtPicker, type NgxDtOrigin, type NgxDtPickerRangeInput } from '../picker/ngx-dt-picker';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { resolveHourCycle } from '../util/hour-cycle';
@@ -96,9 +92,7 @@ export class NgxDtDateTimeRangeInput<T = unknown>
   private _disabledState = false;
 
   /** Current range value (read by the picker for `[selected]`). */
-  readonly range = computed<DateRange<T>>(
-    () => new DateRange<T>(this._start(), this._end()),
-  );
+  readonly range = computed<DateRange<T>>(() => new DateRange<T>(this._start(), this._end()));
 
   private _onChange: (value: DateRange<T>) => void = () => {};
   private _onTouched: () => void = () => {};
@@ -218,11 +212,7 @@ export class NgxDtDateTimeRangeInput<T = unknown>
     if (end !== null && !filter(this.adapter.getDate(end) as unknown as T)) {
       return { ngxDtFilter: true };
     }
-    if (
-      start !== null &&
-      end !== null &&
-      this.adapter.compareDateTime(end, start) < 0
-    ) {
+    if (start !== null && end !== null && this.adapter.compareDateTime(end, start) < 0) {
       return { ngxDtRangeOrder: { start, end } };
     }
     return null;
@@ -280,11 +270,9 @@ export class NgxDtDateTimeRangeInput<T = unknown>
 export abstract class NgxDtDateTimeRangePartBase<T = unknown>
   implements NgxDtDateTimeRangePart<T>, OnInit
 {
-  protected readonly elementRef =
-    inject<ElementRef<HTMLInputElement>>(ElementRef);
+  protected readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   protected readonly adapter = inject<NgxDtDateTimeAdapter<T>>(NgxDtDateTimeAdapter);
-  protected readonly parent =
-    inject<NgxDtDateTimeRangeInput<T>>(NgxDtDateTimeRangeInput);
+  protected readonly parent = inject<NgxDtDateTimeRangeInput<T>>(NgxDtDateTimeRangeInput);
   protected readonly locale =
     (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US';
 
@@ -306,8 +294,7 @@ export abstract class NgxDtDateTimeRangePartBase<T = unknown>
     const text = (event.target as HTMLInputElement).value;
     const parsed = this.adapter.parse(text);
     this._lastValueValid = parsed === null || this.adapter.isValid(parsed);
-    const value =
-      parsed !== null && this.adapter.isValid(parsed) ? parsed : null;
+    const value = parsed !== null && this.adapter.isValid(parsed) ? parsed : null;
     this._report(value, this._lastValueValid);
   }
 
@@ -389,10 +376,7 @@ export class NgxDtStartDateTime<T = unknown>
     '(keydown)': '_onKeydown($event)',
   },
 })
-export class NgxDtEndDateTime<T = unknown>
-  extends NgxDtDateTimeRangePartBase<T>
-  implements OnInit
-{
+export class NgxDtEndDateTime<T = unknown> extends NgxDtDateTimeRangePartBase<T> implements OnInit {
   protected _report(value: T | null, valid: boolean): void {
     this.parent._setEnd(value, valid);
   }

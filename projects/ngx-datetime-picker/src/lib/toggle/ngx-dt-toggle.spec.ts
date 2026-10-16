@@ -45,9 +45,7 @@ describe('NgxDtToggle', () => {
   beforeEach(setup);
 
   function button(fixture: { nativeElement: HTMLElement }) {
-    return fixture.nativeElement.querySelector<HTMLButtonElement>(
-      'button.ngx-dt-toggle-button',
-    )!;
+    return fixture.nativeElement.querySelector<HTMLButtonElement>('button.ngx-dt-toggle-button')!;
   }
 
   it('renders a button with aria-haspopup=dialog and collapsed state', () => {
@@ -64,9 +62,7 @@ describe('NgxDtToggle', () => {
     button(fixture).click();
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(
-      document.querySelector('.cdk-overlay-container .ngx-dt-panel'),
-    ).toBeTruthy();
+    expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeTruthy();
     expect(button(fixture).getAttribute('aria-expanded')).toBe('true');
   });
 
