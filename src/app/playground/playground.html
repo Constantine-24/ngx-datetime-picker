@@ -1,0 +1,181 @@
+<div class="playground">
+  <div class="options" role="group" aria-label="Picker options">
+    <div class="option">
+      <span class="option-label" id="pg-variant">Variant</span>
+      <mat-button-toggle-group
+        aria-labelledby="pg-variant"
+        [hideSingleSelectionIndicator]="true"
+        [value]="type()"
+        (change)="setType($event.value)"
+      >
+        @for (variant of variants; track variant.type) {
+          <mat-button-toggle [value]="variant.type">{{ variant.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="option">
+      <span class="option-label" id="pg-display">Display</span>
+      <mat-button-toggle-group
+        aria-labelledby="pg-display"
+        [hideSingleSelectionIndicator]="true"
+        [value]="inline()"
+        (change)="setInline($event.value)"
+      >
+        <mat-button-toggle [value]="false">Popup</mat-button-toggle>
+        <mat-button-toggle [value]="true">Inline</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    @if (showsTime()) {
+      <div class="option">
+        <span class="option-label" id="pg-hour-cycle">Hour cycle</span>
+        <mat-button-toggle-group
+          aria-labelledby="pg-hour-cycle"
+          [hideSingleSelectionIndicator]="true"
+          [value]="hourCycleChoice()"
+          (change)="hourCycleChoice.set($event.value)"
+        >
+          <mat-button-toggle value="locale">Locale</mat-button-toggle>
+          <mat-button-toggle [value]="12">12h</mat-button-toggle>
+          <mat-button-toggle [value]="24">24h</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="option">
+        <span class="option-label" id="pg-minute-step">Minute step</span>
+        <mat-button-toggle-group
+          aria-labelledby="pg-minute-step"
+          [hideSingleSelectionIndicator]="true"
+          [value]="minuteStep()"
+          (change)="minuteStep.set($event.value)"
+        >
+          @for (step of minuteSteps; track step) {
+            <mat-button-toggle [value]="step">{{ step }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+    }
+
+    <div class="switches">
+      @if (showsTime()) {
+        <mat-slide-toggle [checked]="showSeconds()" (change)="showSeconds.set($event.checked)">
+          Seconds
+        </mat-slide-toggle>
+      }
+      @if (showsRange()) {
+        <mat-slide-toggle [checked]="twoMonths()" (change)="twoMonths.set($event.checked)">
+          Two months
+        </mat-slide-toggle>
+      }
+      @if (showsDate()) {
+        <mat-slide-toggle [checked]="weekdaysOnly()" (change)="weekdaysOnly.set($event.checked)">
+          Weekdays only
+        </mat-slide-toggle>
+      }
+      @if (!inline()) {
+        <mat-slide-toggle [checked]="draftMode()" (change)="draftMode.set($event.checked)">
+          Apply / Cancel
+        </mat-slide-toggle>
+      }
+      <mat-slide-toggle [checked]="rtl()" (change)="rtl.set($event.checked)">
+        Right-to-left
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  <div class="stage" [dir]="rtl() ? 'rtl' : 'ltr'">
+    @for (key of [renderKey()]; track key) {
+      @if (inline()) {
+        <ngx-dt-picker
+          [inline]="true"
+          [type]="type()"
+          [(value)]="inlineValue"
+          [(range)]="inlineRange"
+          [hourCycle]="config().hourCycle"
+          [minuteStep]="minuteStep()"
+          [showSeconds]="showSeconds()"
+          [monthsToDisplay]="config().monthsToDisplay"
+          [dateFilter]="dateFilter()"
+          ariaLabel="Playground picker"
+        />
+      } @else {
+        <div class="field">
+          @switch (type()) {
+            @case ('date-range') {
+              <ngx-dt-date-range-input
+                class="range-field"
+                [rangePicker]="picker"
+                [formField]="fieldTree.period"
+                ariaLabel="Period"
+              >
+                <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
+                <span aria-hidden="true">–</span>
+                <input ngxDtEndDate placeholder="End" aria-label="End date" />
+              </ngx-dt-date-range-input>
+              <ngx-dt-toggle [for]="picker" ariaLabel="Open date range picker" />
+            }
+            @case ('datetime-range') {
+              <ngx-dt-datetime-range-input
+                class="range-field range-field-wide"
+                [rangePicker]="picker"
+                [formField]="fieldTree.period"
+                ariaLabel="Period"
+              >
+                <input ngxDtStartDateTime placeholder="Start" aria-label="Start date and time" />
+                <span aria-hidden="true">–</span>
+                <input ngxDtEndDateTime placeholder="End" aria-label="End date and time" />
+              </ngx-dt-datetime-range-input>
+              <ngx-dt-toggle [for]="picker" ariaLabel="Open datetime range picker" />
+            }
+            @case ('time') {
+              <mat-form-field>
+                <mat-label>Time</mat-label>
+                <input matInput [ngxDtTimeInput]="picker" [formField]="fieldTree.selected" />
+                <ngx-dt-toggle matSuffix [for]="picker" ariaLabel="Open time picker" />
+              </mat-form-field>
+            }
+            @case ('datetime') {
+              <mat-form-field>
+                <mat-label>Date &amp; time</mat-label>
+                <input matInput [ngxDtDateTimeInput]="picker" [formField]="fieldTree.selected" />
+                <ngx-dt-toggle matSuffix [for]="picker" ariaLabel="Open datetime picker" />
+              </mat-form-field>
+            }
+            @default {
+              <mat-form-field>
+                <mat-label>Date</mat-label>
+                <input matInput [ngxDtInput]="picker" [formField]="fieldTree.selected" />
+                <ngx-dt-toggle matSuffix [for]="picker" ariaLabel="Open date picker" />
+              </mat-form-field>
+            }
+          }
+        </div>
+        <ngx-dt-picker
+          #picker="ngxDtPicker"
+          [type]="type()"
+          [hourCycle]="config().hourCycle"
+          [minuteStep]="minuteStep()"
+          [showSeconds]="showSeconds()"
+          [monthsToDisplay]="config().monthsToDisplay"
+          [dateFilter]="dateFilter()"
+          [draftMode]="draftMode()"
+        />
+        <p class="hint">
+          Open it with the calendar button, or focus the field and press <kbd>Alt</kbd> +
+          <kbd>↓</kbd>. You can also type a value.
+        </p>
+      }
+    }
+
+    <p class="result" aria-live="polite">
+      <span class="result-label">Value</span>
+      <output>{{ result() }}</output>
+    </p>
+  </div>
+
+  <div class="code">
+    <app-code-block label="app.config.ts" [code]="snippet().config" />
+    <app-code-block label="Template" [code]="snippet().template" />
+  </div>
+</div>
