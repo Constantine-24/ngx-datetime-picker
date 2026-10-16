@@ -17,11 +17,7 @@ import {
   type ValidationErrors,
   type Validator,
 } from '@angular/forms';
-import {
-  NgxDtPicker,
-  type NgxDtOrigin,
-  type NgxDtPickerInput,
-} from '../picker/ngx-dt-picker';
+import { NgxDtPicker, type NgxDtOrigin, type NgxDtPickerInput } from '../picker/ngx-dt-picker';
 import { NgxDtDateTimeAdapter } from '../datetime/ngx-dt-datetime-adapter';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { resolveHourCycle } from '../util/hour-cycle';

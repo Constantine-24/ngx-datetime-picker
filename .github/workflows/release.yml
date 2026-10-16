@@ -1,0 +1,69 @@
+name: Release
+
+# Publishes @constantine-24/ngx-datetime-picker to npm when a vX.Y.Z tag is pushed.
+#
+# Auth: npm trusted publishing (OIDC) — configure it on npmjs.com → package → Settings →
+# Trusted Publisher (GitHub Actions, workflow file "release.yml"). Trusted publishing can only be
+# set up once the package exists, so for the very first publish add an `NPM_TOKEN` repository
+# secret (granular token, publish rights); remove it once trusted publishing is configured.
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write # create the GitHub Release
+  id-token: write # npm trusted publishing + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - run: npm install -g npm@11
+
+      - run: npm ci
+
+      - name: Check the tag matches the library version
+        run: |
+          VERSION=$(node -p "require('./projects/ngx-datetime-picker/package.json').version")
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package version v${VERSION}"
+            exit 1
+          fi
+
+      - run: npm run lint
+      - run: npm run test:ci
+      - run: npm run build:lib
+
+      - name: Publish to npm
+        working-directory: dist/ngx-datetime-picker
+        # Prereleases (v1.2.0-rc.1) go to the "next" dist-tag so they never become "latest".
+        run: |
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="docs/releases/${GITHUB_REF_NAME}.md"
+          PRERELEASE=$([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease || true)
+          if [ -f "$NOTES" ]; then
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$NOTES" $PRERELEASE
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes $PRERELEASE
+          fi

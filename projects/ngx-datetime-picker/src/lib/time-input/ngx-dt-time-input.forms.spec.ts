@@ -4,8 +4,8 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
-import { NgxDtPicker, NgxDtTimeInput } from 'ngx-datetime-picker';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
+import { NgxDtPicker, NgxDtTimeInput } from '@constantine-24/ngx-datetime-picker';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 function setup() {

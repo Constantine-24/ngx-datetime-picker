@@ -86,8 +86,7 @@ export abstract class NgxDtDateTimeAdapter<DT, D = unknown, T = unknown> {
    * null/invalid, the time defaults to the start of the day.
    */
   withDate(value: DT | null, date: D): DT {
-    const time =
-      value != null && this.isValid(value) ? this.getTime(value) : this.startOfDayTime();
+    const time = value != null && this.isValid(value) ? this.getTime(value) : this.startOfDayTime();
     return this.combine(date, time);
   }
 

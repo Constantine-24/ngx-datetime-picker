@@ -19,17 +19,9 @@ import {
   type ValidationErrors,
   type Validator,
 } from '@angular/forms';
-import {
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  type MatDateFormats,
-} from '@angular/material/core';
+import { DateAdapter, MAT_DATE_FORMATS, type MatDateFormats } from '@angular/material/core';
 import { DateRange } from '@angular/material/datepicker';
-import {
-  NgxDtPicker,
-  type NgxDtOrigin,
-  type NgxDtPickerRangeInput,
-} from '../picker/ngx-dt-picker';
+import { NgxDtPicker, type NgxDtOrigin, type NgxDtPickerRangeInput } from '../picker/ngx-dt-picker';
 
 /** I/O contract a single range end (start/end input) exposes to the container. */
 interface NgxDtRangePart<D> {
@@ -96,9 +88,7 @@ export class NgxDtDateRangeInput<D = unknown>
   private _disabledState = false;
 
   /** Current range value (read by the picker for `[selected]`). */
-  readonly range = computed<DateRange<D>>(
-    () => new DateRange<D>(this._start(), this._end()),
-  );
+  readonly range = computed<DateRange<D>>(() => new DateRange<D>(this._start(), this._end()));
 
   private _onChange: (value: DateRange<D>) => void = () => {};
   private _onTouched: () => void = () => {};
@@ -164,12 +154,8 @@ export class NgxDtDateRangeInput<D = unknown>
   // --- ControlValueAccessor -------------------------------------------------
 
   writeValue(value: DateRange<D> | null): void {
-    const start = this.adapter.getValidDateOrNull(
-      this.adapter.deserialize(value?.start ?? null),
-    );
-    const end = this.adapter.getValidDateOrNull(
-      this.adapter.deserialize(value?.end ?? null),
-    );
+    const start = this.adapter.getValidDateOrNull(this.adapter.deserialize(value?.start ?? null));
+    const end = this.adapter.getValidDateOrNull(this.adapter.deserialize(value?.end ?? null));
     this._startValid = true;
     this._endValid = true;
     this._start.set(start);
@@ -260,11 +246,8 @@ export class NgxDtDateRangeInput<D = unknown>
  * from, the parent container.
  */
 @Directive()
-export abstract class NgxDtDateRangePartBase<D = unknown>
-  implements NgxDtRangePart<D>
-{
-  protected readonly elementRef =
-    inject<ElementRef<HTMLInputElement>>(ElementRef);
+export abstract class NgxDtDateRangePartBase<D = unknown> implements NgxDtRangePart<D>, OnInit {
+  protected readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   protected readonly adapter = inject<DateAdapter<D>>(DateAdapter);
   protected readonly dateFormats = inject<MatDateFormats>(MAT_DATE_FORMATS);
   protected readonly parent = inject<NgxDtDateRangeInput<D>>(NgxDtDateRangeInput);
@@ -329,10 +312,7 @@ export abstract class NgxDtDateRangePartBase<D = unknown>
     '(keydown)': '_onKeydown($event)',
   },
 })
-export class NgxDtStartDate<D = unknown>
-  extends NgxDtDateRangePartBase<D>
-  implements OnInit
-{
+export class NgxDtStartDate<D = unknown> extends NgxDtDateRangePartBase<D> implements OnInit {
   protected _report(date: D | null, valid: boolean): void {
     this.parent._setStart(date, valid);
   }
@@ -355,10 +335,7 @@ export class NgxDtStartDate<D = unknown>
     '(keydown)': '_onKeydown($event)',
   },
 })
-export class NgxDtEndDate<D = unknown>
-  extends NgxDtDateRangePartBase<D>
-  implements OnInit
-{
+export class NgxDtEndDate<D = unknown> extends NgxDtDateRangePartBase<D> implements OnInit {
   protected _report(date: D | null, valid: boolean): void {
     this.parent._setEnd(date, valid);
   }

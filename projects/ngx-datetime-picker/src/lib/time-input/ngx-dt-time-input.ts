@@ -17,11 +17,7 @@ import {
   type ValidationErrors,
   type Validator,
 } from '@angular/forms';
-import {
-  NgxDtPicker,
-  type NgxDtOrigin,
-  type NgxDtPickerInput,
-} from '../picker/ngx-dt-picker';
+import { NgxDtPicker, type NgxDtOrigin, type NgxDtPickerInput } from '../picker/ngx-dt-picker';
 import { NgxDtTimeAdapter } from '../time/ngx-dt-time-adapter';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { resolveHourCycle } from '../util/hour-cycle';
@@ -208,9 +204,7 @@ export class NgxDtTimeInput<T = unknown>
 
   private _formatToInput(time: T | null): void {
     this.elementRef.nativeElement.value =
-      time && this.adapter.isValid(time)
-        ? this.adapter.format(time, this._displayOptions())
-        : '';
+      time && this.adapter.isValid(time) ? this.adapter.format(time, this._displayOptions()) : '';
   }
 
   /** Display options that honor the picker's effective hour cycle. */

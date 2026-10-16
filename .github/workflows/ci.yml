@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check (library + demo specs)
+        run: |
+          npx tsc -p projects/ngx-datetime-picker/tsconfig.spec.json --noEmit
+          npx tsc -p tsconfig.spec.json --noEmit
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      - name: Build library
+        run: npm run build:lib
+
+      - name: Inspect package contents
+        working-directory: dist/ngx-datetime-picker
+        run: npm pack --dry-run
+
+      - name: Build demo
+        run: npx ng build --base-href /ngx-datetime-picker/

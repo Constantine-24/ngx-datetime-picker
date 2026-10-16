@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      angular:
+        patterns: ['@angular/*', '@angular-devkit/*', 'ng-packagr', 'angular-eslint']
+      dev-tooling:
+        dependency-type: development
+        exclude-patterns: ['@angular/*', '@angular-devkit/*', 'ng-packagr', 'angular-eslint']
+    # Angular majors are deliberate library releases (peer range change) — do them by hand.
+    ignore:
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

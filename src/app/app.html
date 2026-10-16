@@ -1,192 +1,66 @@
-<main class="demo">
-  <h1>ngx-datetime-picker — date picker</h1>
+<a class="skip-link" href="#main">Skip to content</a>
 
-  <section>
-    <h2>Inline</h2>
-    <ngx-dt-picker [inline]="true" [(value)]="inlineValue" />
-    <p>Selected: {{ inlineValue()?.toString() ?? 'none' }}</p>
-  </section>
+<header class="topbar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6.3a7 7 0 0 1-1.1-2H5V9h14v1.2a7 7 0 0 1 2 1.1V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm10 10a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm-.75 2h1.5v2.7l2 1.2-.75 1.3-2.75-1.6V14Z"
+      />
+    </svg>
+    ngx-datetime-picker
+  </a>
+  <nav aria-label="Project links">
+    <a [href]="repositoryUrl">GitHub</a>
+    <a [href]="npmUrl">npm</a>
+    <app-theme-toggle />
+  </nav>
+</header>
 
-  <section>
-    <h2>Popup (toggle)</h2>
-    <ngx-dt-toggle [for]="popup" />
-    <ngx-dt-picker #popup="ngxDtPicker" [(value)]="popupValue" />
-    <p>Selected: {{ popupValue()?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Reactive Forms (mat-form-field)</h2>
-    <mat-form-field>
-      <mat-label>Pick a date</mat-label>
-      <input matInput [ngxDtInput]="rp" [formControl]="reactiveCtrl" />
-      <ngx-dt-toggle matSuffix [for]="rp" />
-    </mat-form-field>
-    <ngx-dt-picker #rp />
-    <p>Reactive value: {{ reactiveCtrl.value?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Template-driven (ngModel)</h2>
-    <mat-form-field>
-      <mat-label>Pick a date</mat-label>
-      <input matInput [ngxDtInput]="mp" [(ngModel)]="ngModelValue" />
-      <ngx-dt-toggle matSuffix [for]="mp" />
-    </mat-form-field>
-    <ngx-dt-picker #mp />
-    <p>ngModel value: {{ ngModelValue?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Signal Forms</h2>
-    <mat-form-field>
-      <mat-label>Pick a date</mat-label>
-      <input matInput [ngxDtInput]="sp" [formField]="signalForm.date" />
-      <ngx-dt-toggle matSuffix [for]="sp" />
-    </mat-form-field>
-    <ngx-dt-picker #sp />
-    <p>Signal value: {{ signalForm.date().value()?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Date range</h2>
-    <div class="ngx-dt-range-field">
-      <ngx-dt-date-range-input
-        [rangePicker]="rangePick"
-        [formControl]="rangeCtrl"
-        ariaLabel="Trip dates"
-      >
-        <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
-        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
-        <input ngxDtEndDate placeholder="End" aria-label="End date" />
-      </ngx-dt-date-range-input>
-      <ngx-dt-toggle [for]="rangePick" ariaLabel="Open range calendar" />
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow">Angular 22 · Material 3 · Temporal</p>
+      <h1 id="hero-title">Date &amp; time pickers that feel native to Angular.</h1>
+      <p class="lede">
+        Date, date range, time, datetime and datetime range — one consistent component built on
+        Angular CDK and Material, typed end to end with TC39 Temporal, and accessible by default.
+      </p>
+      <app-code-block label="Install" [code]="installCommand" />
+      <ul class="features" aria-label="Highlights">
+        @for (feature of features; track feature) {
+          <li>{{ feature }}</li>
+        }
+      </ul>
     </div>
-    <ngx-dt-picker #rangePick type="date-range" />
-    <p>
-      Range:
-      {{ rangeCtrl.value?.start?.toString() ?? '—' }}
-      →
-      {{ rangeCtrl.value?.end?.toString() ?? '—' }}
-    </p>
-  </section>
-
-  <section>
-    <h2>Time (inline, with seconds)</h2>
-    <ngx-dt-picker
-      type="time"
-      [inline]="true"
-      [(value)]="inlineTime"
-      [showSeconds]="true"
-    />
-    <p>Selected: {{ inlineTime()?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Time (popup, Reactive Forms)</h2>
-    <mat-form-field>
-      <mat-label>Pick a time</mat-label>
-      <input matInput [ngxDtTimeInput]="tp" [formControl]="timeCtrl" />
-      <ngx-dt-toggle matSuffix [for]="tp" ariaLabel="Open time picker" />
-    </mat-form-field>
-    <ngx-dt-picker #tp type="time" [hourCycle]="12" />
-    <p>Time: {{ timeCtrl.value?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Datetime (inline, with seconds)</h2>
-    <ngx-dt-picker
-      type="datetime"
-      [inline]="true"
-      [(value)]="inlineDateTime"
-      [showSeconds]="true"
-    />
-    <p>Selected: {{ inlineDateTime()?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Datetime (popup, Reactive Forms)</h2>
-    <mat-form-field>
-      <mat-label>Pick a date &amp; time</mat-label>
-      <input matInput [ngxDtDateTimeInput]="dtp" [formControl]="dateTimeCtrl" />
-      <ngx-dt-toggle matSuffix [for]="dtp" ariaLabel="Open datetime picker" />
-    </mat-form-field>
-    <ngx-dt-picker #dtp type="datetime" [hourCycle]="12" />
-    <p>Datetime: {{ dateTimeCtrl.value?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Datetime range (popup, Reactive Forms)</h2>
-    <div class="ngx-dt-range-field">
-      <ngx-dt-datetime-range-input
-        [rangePicker]="dtRangePick"
-        [formControl]="dateTimeRangeCtrl"
-        ariaLabel="Trip start and end"
-      >
-        <input ngxDtStartDateTime placeholder="Start" aria-label="Start date and time" />
-        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
-        <input ngxDtEndDateTime placeholder="End" aria-label="End date and time" />
-      </ngx-dt-datetime-range-input>
-      <ngx-dt-toggle [for]="dtRangePick" ariaLabel="Open datetime range picker" />
+    <div class="hero-picker">
+      <ngx-dt-picker
+        type="datetime"
+        [inline]="true"
+        [(value)]="heroValue"
+        [minuteStep]="15"
+        ariaLabel="Example datetime picker"
+      />
     </div>
-    <ngx-dt-picker #dtRangePick type="datetime-range" [hourCycle]="12" />
-    <p>
-      Range:
-      {{ dateTimeRangeCtrl.value?.start?.toString() ?? '—' }}
-      →
-      {{ dateTimeRangeCtrl.value?.end?.toString() ?? '—' }}
+  </section>
+
+  <section class="section" aria-labelledby="playground-title">
+    <h2 id="playground-title">Playground</h2>
+    <p class="section-intro">
+      Configure a picker and copy the code. Everything below uses the published API only.
     </p>
+    <app-playground />
   </section>
 
-  <section>
-    <h2>Dual-calendar date range</h2>
-    <div class="ngx-dt-range-field">
-      <ngx-dt-date-range-input
-        [rangePicker]="dualRange"
-        [formControl]="dualRangeCtrl"
-        ariaLabel="Select date range"
-      >
-        <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
-        <span class="ngx-dt-range-sep" aria-hidden="true">–</span>
-        <input ngxDtEndDate placeholder="End" aria-label="End date" />
-      </ngx-dt-date-range-input>
-      <ngx-dt-toggle [for]="dualRange" ariaLabel="Open dual-calendar range picker" />
-    </div>
-    <ngx-dt-picker #dualRange type="date-range" [monthsToDisplay]="2" />
-    <p>
-      Range:
-      {{ dualRangeCtrl.value?.start?.toString() ?? '—' }}
-      →
-      {{ dualRangeCtrl.value?.end?.toString() ?? '—' }}
-    </p>
-  </section>
-
-  <section>
-    <h2>Draft-mode date</h2>
-    <mat-form-field>
-      <mat-label>Pick a date (draft mode)</mat-label>
-      <input matInput [ngxDtInput]="draftPick" [formControl]="draftCtrl" />
-      <ngx-dt-toggle matSuffix [for]="draftPick" ariaLabel="Open draft-mode date picker" />
-    </mat-form-field>
-    <ngx-dt-picker #draftPick [draftMode]="true" />
-    <p>Draft value: {{ draftCtrl.value?.toString() ?? 'none' }}</p>
-  </section>
-
-  <section>
-    <h2>Filtered datetime (weekdays, 09:00–17:00, 12h)</h2>
-    <mat-form-field>
-      <mat-label>Pick a weekday &amp; business hour</mat-label>
-      <input matInput [ngxDtDateTimeInput]="filteredPick" [formControl]="filteredCtrl" />
-      <ngx-dt-toggle matSuffix [for]="filteredPick" ariaLabel="Open filtered datetime picker" />
-    </mat-form-field>
-    <ngx-dt-picker
-      #filteredPick
-      type="datetime"
-      [hourCycle]="12"
-      [dateFilter]="weekdaysOnly"
-      [timeFilter]="businessHours"
-    />
-    <p>Selected: {{ filteredCtrl.value?.toString() ?? 'none' }}</p>
+  <section class="section" aria-labelledby="examples-title">
+    <h2 id="examples-title">Examples</h2>
+    <p class="section-intro">Common scenarios, each with the code that builds it.</p>
+    <app-examples />
   </section>
 </main>
 
-<router-outlet />
+<footer class="footer">
+  <p>
+    MIT licensed · Made by Konstantin Penzin ·
+    <a [href]="repositoryUrl">Source on GitHub</a>
+  </p>
+</footer>

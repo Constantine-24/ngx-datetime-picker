@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtDateTimeInput } from './ngx-dt-datetime-input';
@@ -119,9 +119,7 @@ describe('NgxDtDateTimeInput', () => {
 
   it('Alt+ArrowDown opens the picker', async () => {
     const fixture = await render();
-    input(fixture).dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }),
-    );
+    input(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }));
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);
@@ -155,7 +153,11 @@ describe('NgxDtDateTimeInput', () => {
     const fixture = TestBed.createComponent(HostWithFilter);
     // Disallow 2026-06-21 specifically (compare the date part).
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-21')) !== 0,
+      (d) =>
+        Temporal.PlainDate.compare(
+          d as unknown as Temporal.PlainDate,
+          Temporal.PlainDate.from('2026-06-21'),
+        ) !== 0,
     );
     await fixture.whenStable();
     const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;
@@ -169,7 +171,11 @@ describe('NgxDtDateTimeInput', () => {
     setup();
     const fixture = TestBed.createComponent(HostWithFilter);
     fixture.componentInstance.dateFilter.set(
-      (d) => Temporal.PlainDate.compare(d as unknown as Temporal.PlainDate, Temporal.PlainDate.from('2026-06-21')) !== 0,
+      (d) =>
+        Temporal.PlainDate.compare(
+          d as unknown as Temporal.PlainDate,
+          Temporal.PlainDate.from('2026-06-21'),
+        ) !== 0,
     );
     await fixture.whenStable();
     const el = fixture.nativeElement.querySelector('input') as HTMLInputElement;

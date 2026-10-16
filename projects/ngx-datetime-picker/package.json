@@ -1,6 +1,31 @@
 {
-  "name": "ngx-datetime-picker",
+  "name": "@constantine-24/ngx-datetime-picker",
   "version": "1.0.0",
+  "description": "Configurable Angular date, time, datetime and range picker built on Angular CDK and Material, with a first-class TC39 Temporal adapter.",
+  "keywords": [
+    "angular",
+    "datepicker",
+    "timepicker",
+    "datetime-picker",
+    "date-range-picker",
+    "temporal",
+    "angular-material",
+    "signal-forms"
+  ],
+  "author": "Konstantin Penzin",
+  "license": "MIT",
+  "homepage": "https://constantine-24.github.io/ngx-datetime-picker/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Constantine-24/ngx-datetime-picker.git",
+    "directory": "projects/ngx-datetime-picker"
+  },
+  "bugs": {
+    "url": "https://github.com/Constantine-24/ngx-datetime-picker/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@angular/common": "^22.0.0",
     "@angular/core": "^22.0.0",
@@ -9,7 +34,9 @@
     "temporal-polyfill": "^0.3.0"
   },
   "peerDependenciesMeta": {
-    "temporal-polyfill": { "optional": true }
+    "temporal-polyfill": {
+      "optional": true
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"

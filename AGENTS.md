@@ -1,57 +1,48 @@
+# AGENTS.md
 
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+**ngx-datetime-picker** — Angular 22 date / time / datetime / range picker library, published to npm as `@constantine-24/ngx-datetime-picker`, plus a demo app deployed to GitHub Pages.
 
-## TypeScript Best Practices
+This file exists for cross-tool compatibility (Codex, Cursor, Aider, Copilot, …). The authoritative guidance for AI agents is **[CLAUDE.md](./CLAUDE.md)** and the rule modules under **[`.claude/rules/`](./.claude/rules/)**. Read them as the source of truth; this file only points at them and must not restate them.
 
-- Use strict type checking
-- Prefer type inference when the type is obvious
-- Avoid the `any` type; use `unknown` when type is uncertain
+## Project map
 
-## Angular Best Practices
+- `projects/ngx-datetime-picker/` — the publishable library (core entry `src/`, Temporal secondary entry `temporal/`)
+- `src/` — the demo app (consumes only the public API)
+- `docs/` — design record and release notes
+- `.github/` — CI, GitHub Pages deploy, npm release workflows; issue/PR templates
 
-- Always use standalone components over NgModules
-- Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
-- Do NOT set `changeDetection: ChangeDetectionStrategy.OnPush` explicitly. `OnPush` is the default in Angular v22+.
-- Use signals for state management
-- Implement lazy loading for feature routes
-- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-- Use `NgOptimizedImage` for all static images.
-  - `NgOptimizedImage` does not work for inline base64 images.
+## Rule modules (project-wide — read all of them)
 
-## Accessibility Requirements
+- [.claude/rules/architecture.md](./.claude/rules/architecture.md) — workspace, entry points, public-API discipline
+- [.claude/rules/commands.md](./.claude/rules/commands.md) — build / test / lint / verification gates
+- [.claude/rules/code-style.md](./.claude/rules/code-style.md)
+- [.claude/rules/angular-components.md](./.claude/rules/angular-components.md) — Angular v22 rules + library conventions
+- [.claude/rules/styling.md](./.claude/rules/styling.md)
+- [.claude/rules/accessibility.md](./.claude/rules/accessibility.md)
+- [.claude/rules/workflow.md](./.claude/rules/workflow.md) — branches, Conventional Commits, TDD, CHANGELOG
+- [.claude/rules/review-gate.md](./.claude/rules/review-gate.md) — review process + Required checks
+- [.claude/rules/release.md](./.claude/rules/release.md) — semver and the tag-driven npm release
 
-- It MUST pass all AXE checks.
-- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+## Area-specific rules (read when working in that directory)
 
-### Components
+- [projects/ngx-datetime-picker/CLAUDE.md](./projects/ngx-datetime-picker/CLAUDE.md) — library internals, pinned Material internals, gotchas
+- [src/CLAUDE.md](./src/CLAUDE.md) — demo app
 
-- Keep components small and focused on a single responsibility
-- Use `input()` and `output()` functions instead of decorators
-- Use `computed()` for derived state
-- Prefer inline templates for small components
-- Prefer Signal Forms (`@angular/forms/signals`) for new forms. They are stable in Angular v22+ and provide signal-based state, type-safe field access, and schema-based validation
-- When not using Signal Forms, prefer Reactive forms instead of Template-driven ones
-- Do NOT use `ngClass`, use `class` bindings instead
-- Do NOT use `ngStyle`, use `style` bindings instead
-- When using external templates/styles, use paths relative to the component TS file.
+## Commands & skills
 
-## State Management
+- Release preparation: [.claude/commands/release.md](./.claude/commands/release.md) (Claude Code `/release`) — mirrored as the Codex skill [.agents/skills/release/SKILL.md](./.agents/skills/release/SKILL.md).
+- Review: [.claude/rules/review-gate.md](./.claude/rules/review-gate.md) — apply its Required checks with whichever review runner your tool has.
 
-- Use signals for local component state
-- Use `computed()` for derived state
-- Keep state transformations pure and predictable
-- Do NOT use `mutate` on signals, use `update` or `set` instead
+## Enforcement
 
-## Templates
+Rules that are enforced deterministically rather than as prose:
 
-- Keep templates simple and avoid complex logic
-- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Use the async pipe to handle observables
-- Do not assume globals like (`new Date()`) are available.
+- **ESLint** (`npm run lint`, angular-eslint) and **Prettier** (`npm run format:check`) — both run in CI.
+- **Hooks** — `.claude/settings.json` → `.claude/hooks/*`; Codex mirrors them in `.codex/hooks.json` pointing at the same scripts:
+  - PreToolUse (Bash): block direct ESLint / Vitest calls — use `ng lint` / `ng test`.
+  - PostToolUse (Edit/Write): `prettier --write` the edited file.
+- **CI** (`.github/workflows/ci.yml`) — lint, format, type-check, tests, library build, `npm pack` dry run.
 
-## Services
+## MCP
 
-- Design services around a single responsibility
-- Use the `providedIn: 'root'` option for singleton services
-- Prefer the `@Service` decorator over `@Injectable({providedIn: 'root'})` for new singleton services (Angular v22+)
-- Use the `inject()` function instead of constructor injection
+[`.codex/config.toml`](./.codex/config.toml) registers `context7` (library docs) and `chrome-devtools` (live UI / a11y verification). Claude Code users get the same through their own MCP configuration.

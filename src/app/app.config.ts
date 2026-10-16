@@ -3,18 +3,15 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
-
-import { routes } from './app.routes';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes),
     provideAnimationsAsync(),
+    // One call covers every variant: it composes the date and time adapters and the bridge.
     provideTemporalDateTimeAdapter(),
   ],
 };

@@ -343,11 +343,7 @@ export class NgxDtTimePanel<T = unknown> {
     let candidate = base;
     for (let i = 0; i < cap; i++) {
       candidate = this.stepField(candidate, field, perStep);
-      const composed = this.adapter.createTime(
-        candidate.hour,
-        candidate.minute,
-        candidate.second,
-      );
+      const composed = this.adapter.createTime(candidate.hour, candidate.minute, candidate.second);
       const clamped = this.adapter.clampTime(composed, this.min(), this.max());
       if (this.allowed(clamped)) {
         if (!this.adapter.sameTime(clamped, this.value())) {

@@ -4,7 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtTimePanel } from './ngx-dt-time-panel';
 
@@ -52,7 +52,7 @@ function setup() {
   });
 }
 
-async function render(host: Host) {
+async function render() {
   const fixture = TestBed.createComponent(Host);
   fixture.detectChanges();
   await fixture.whenStable();
@@ -67,7 +67,7 @@ describe('NgxDtTimePanel — 24h', () => {
   beforeEach(setup);
 
   it('renders hour and minute spinbuttons (no seconds by default)', async () => {
-    const fixture = await render(new Host());
+    const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
     expect(fields(root).length).toBe(2);
   });
@@ -82,7 +82,7 @@ describe('NgxDtTimePanel — 24h', () => {
   });
 
   it('shows placeholders when value is null', async () => {
-    const fixture = await render(new Host());
+    const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
     expect(fields(root)[0].value).toBe('--');
   });
@@ -104,9 +104,7 @@ describe('NgxDtTimePanel — 24h', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
-    const upHour = root.querySelector<HTMLButtonElement>(
-      '[data-testid="up-hour"]',
-    )!;
+    const upHour = root.querySelector<HTMLButtonElement>('[data-testid="up-hour"]')!;
     upHour.click();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -140,7 +138,7 @@ describe('NgxDtTimePanel — 24h', () => {
   });
 
   it('type-to-set: typing a value and blurring commits it', async () => {
-    const fixture = await render(new Host());
+    const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
     const hour = fields(root)[0];
     hour.value = '7';
@@ -200,7 +198,7 @@ describe('NgxDtTimePanel — 24h', () => {
   });
 
   it('clamps typed input above the field max instead of wrapping', async () => {
-    const fixture = await render(new Host());
+    const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
     const minute = fields(root)[1];
     minute.value = '99';

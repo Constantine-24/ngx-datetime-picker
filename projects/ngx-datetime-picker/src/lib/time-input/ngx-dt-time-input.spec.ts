@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtTimeInput } from './ngx-dt-time-input';
@@ -14,7 +14,14 @@ import { NgxDtTimeInput } from './ngx-dt-time-input';
   imports: [NgxDtPicker, NgxDtTimeInput, ReactiveFormsModule],
   template: `
     <input [ngxDtTimeInput]="picker" [formControl]="ctrl" />
-    <ngx-dt-picker #picker type="time" [min]="min()" [max]="max()" [hourCycle]="hourCycle()" [timeFilter]="timeFilter()" />
+    <ngx-dt-picker
+      #picker
+      type="time"
+      [min]="min()"
+      [max]="max()"
+      [hourCycle]="hourCycle()"
+      [timeFilter]="timeFilter()"
+    />
   `,
 })
 class Host {
@@ -113,9 +120,7 @@ describe('NgxDtTimeInput', () => {
   it('Alt+ArrowDown opens the picker', async () => {
     const fixture = await render();
     const el = input(fixture);
-    el.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }),
-    );
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }));
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);

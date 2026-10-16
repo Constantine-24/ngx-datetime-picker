@@ -4,10 +4,20 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtInput } from './ngx-dt-input';
+
+// Specs click calendar cells by index and assume the calendar opens on June 2026.
+// Pin "today" (Date only, so real timers keep fixture.whenStable() working).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-20T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 @Component({
   imports: [NgxDtInput, NgxDtPicker],
@@ -56,9 +66,7 @@ describe('NgxDtInput — value binding & parsing', () => {
     expect(fixture.componentInstance.input().value()).toEqual(
       Temporal.PlainDate.from('2026-06-15'),
     );
-    expect(fixture.componentInstance.changed()).toEqual(
-      Temporal.PlainDate.from('2026-06-15'),
-    );
+    expect(fixture.componentInstance.changed()).toEqual(Temporal.PlainDate.from('2026-06-15'));
   });
 
   it('resolves unparseable text to null', async () => {
@@ -93,9 +101,7 @@ describe('NgxDtInput — value binding & parsing', () => {
     await fixture.whenStable();
 
     // Drive the picker -> input seam directly (as the calendar does).
-    fixture.componentInstance.input().setValueFromPicker(
-      Temporal.PlainDate.from('2026-06-21'),
-    );
+    fixture.componentInstance.input().setValueFromPicker(Temporal.PlainDate.from('2026-06-21'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -137,7 +143,9 @@ describe('NgxDtInput — keyboard open', () => {
     await fixture.whenStable();
 
     const el = inputEl(fixture);
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }));
+    el.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }),
+    );
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -180,13 +188,7 @@ describe('NgxDtInput — validators', () => {
     imports: [NgxDtInput, NgxDtPicker, ReactiveFormsModule],
     template: `
       <input [ngxDtInput]="picker" [formControl]="ctrl" />
-      <ngx-dt-picker
-        #picker
-        [inline]="true"
-        [min]="min"
-        [max]="max"
-        [dateFilter]="filter"
-      />
+      <ngx-dt-picker #picker [inline]="true" [min]="min" [max]="max" [dateFilter]="filter" />
     `,
   })
   class ValidatedHost {

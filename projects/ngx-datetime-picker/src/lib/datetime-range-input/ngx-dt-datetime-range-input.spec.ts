@@ -6,14 +6,24 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { DateRange } from '@angular/material/datepicker';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import {
   NgxDtDateTimeRangeInput,
   NgxDtEndDateTime,
   NgxDtStartDateTime,
 } from './ngx-dt-datetime-range-input';
+
+// Specs click calendar cells by index and assume the calendar opens on June 2026.
+// Pin "today" (Date only, so real timers keep fixture.whenStable() working).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-20T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 @Component({
   imports: [
@@ -116,9 +126,8 @@ describe('NgxDtDateTimeRangeInput — text I/O', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = fixture.debugElement.query(
-      By.directive(NgxDtDateTimeRangeInput),
-    ).componentInstance as NgxDtDateTimeRangeInput<Temporal.PlainDateTime>;
+    const directive = fixture.debugElement.query(By.directive(NgxDtDateTimeRangeInput))
+      .componentInstance as NgxDtDateTimeRangeInput<Temporal.PlainDateTime>;
     const emissions: DateRange<Temporal.PlainDateTime>[] = [];
     directive.rangeChange.subscribe((r) => emissions.push(r));
 
@@ -185,9 +194,8 @@ describe('NgxDtDateTimeRangeInput — picker bridge', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const container = fixture.debugElement.query(
-      By.directive(NgxDtDateTimeRangeInput),
-    ).componentInstance as NgxDtDateTimeRangeInput<Temporal.PlainDateTime>;
+    const container = fixture.debugElement.query(By.directive(NgxDtDateTimeRangeInput))
+      .componentInstance as NgxDtDateTimeRangeInput<Temporal.PlainDateTime>;
     const emissions: DateRange<Temporal.PlainDateTime>[] = [];
     container.rangeChange.subscribe((r) => emissions.push(r));
 
@@ -209,12 +217,7 @@ describe('NgxDtDateTimeRangeInput — picker bridge', () => {
 
   it('opens the picker on Alt+ArrowDown from the start input', async () => {
     @Component({
-      imports: [
-        NgxDtDateTimeRangeInput,
-        NgxDtStartDateTime,
-        NgxDtEndDateTime,
-        NgxDtPicker,
-      ],
+      imports: [NgxDtDateTimeRangeInput, NgxDtStartDateTime, NgxDtEndDateTime, NgxDtPicker],
       template: `
         <ngx-dt-datetime-range-input [rangePicker]="picker">
           <input ngxDtStartDateTime />
@@ -224,8 +227,7 @@ describe('NgxDtDateTimeRangeInput — picker bridge', () => {
       `,
     })
     class OverlayHost {
-      readonly picker =
-        viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+      readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
     }
     const fixture = TestBed.createComponent(OverlayHost);
     fixture.detectChanges();
