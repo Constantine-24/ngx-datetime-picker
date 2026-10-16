@@ -9,10 +9,7 @@ import { provideTemporalDateTimeAdapter } from './provide-temporal-datetime-adap
 function adapter(locale = 'en-US'): TemporalDateTimeAdapter {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
-    providers: [
-      provideTemporalDateTimeAdapter(),
-      { provide: MAT_DATE_LOCALE, useValue: locale },
-    ],
+    providers: [provideTemporalDateTimeAdapter(), { provide: MAT_DATE_LOCALE, useValue: locale }],
   });
   return TestBed.inject(NgxDtDateTimeAdapter) as TemporalDateTimeAdapter;
 }

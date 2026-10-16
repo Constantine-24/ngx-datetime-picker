@@ -64,8 +64,7 @@ import { NgxDtPicker } from '../picker/ngx-dt-picker';
   host: { class: 'ngx-dt-toggle' },
 })
 export class NgxDtToggle {
-  private readonly host =
-    inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** The picker this toggle controls; bind a template ref: `[for]="picker"`. */
   readonly picker = input.required<NgxDtPicker>({ alias: 'for' });

@@ -34,7 +34,9 @@
     "temporal-polyfill": "^0.3.0"
   },
   "peerDependenciesMeta": {
-    "temporal-polyfill": { "optional": true }
+    "temporal-polyfill": {
+      "optional": true
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"

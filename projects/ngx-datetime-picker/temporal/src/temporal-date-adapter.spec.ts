@@ -116,9 +116,7 @@ describe('TemporalDateAdapter — parse', () => {
   });
   it('numeric string with extra number groups → invalid', () => {
     const a = makeAdapter('en-US');
-    expect(
-      a.isValid(a.parse('Version 2 dated 06/20/2026') as Temporal.PlainDate),
-    ).toBe(false);
+    expect(a.isValid(a.parse('Version 2 dated 06/20/2026') as Temporal.PlainDate)).toBe(false);
   });
 });
 

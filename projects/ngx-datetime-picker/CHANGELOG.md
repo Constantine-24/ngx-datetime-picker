@@ -113,5 +113,6 @@ First public release: a configurable Angular date & time picker built on
   structural constraint of the underlying `MatCalendar`.
 
 <!-- Replace <OWNER>/<REPO> once a git remote is configured. -->
+
 [Unreleased]: https://github.com/<OWNER>/<REPO>/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/<OWNER>/<REPO>/releases/tag/v1.0.0

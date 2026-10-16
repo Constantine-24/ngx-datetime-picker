@@ -88,19 +88,12 @@ export class TemporalDateTimeAdapter extends NgxDtDateTimeAdapter<
         : null;
     }
     const timeStr = timeMatch[0];
-    const dateStr = (
-      str.slice(0, timeMatch.index) + str.slice(timeMatch.index! + timeStr.length)
-    )
+    const dateStr = (str.slice(0, timeMatch.index) + str.slice(timeMatch.index! + timeStr.length))
       .replace(/,/g, ' ')
       .trim();
     const date = this.dateAdapter.parse(dateStr, null);
     const time = this.timeAdapter.parse(timeStr);
-    if (
-      date &&
-      this.dateAdapter.isValid(date) &&
-      time &&
-      this.timeAdapter.isValid(time)
-    ) {
+    if (date && this.dateAdapter.isValid(date) && time && this.timeAdapter.isValid(time)) {
       return this.combine(date, time);
     }
     return null;

@@ -24,13 +24,7 @@ afterEach(() => {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `
-    <ngx-dt-picker
-      #picker
-      [inline]="true"
-      [(value)]="value"
-    />
-  `,
+  template: ` <ngx-dt-picker #picker [inline]="true" [(value)]="value" /> `,
 })
 class InlineHost {
   value = signal<Temporal.PlainDate | null>(null);
@@ -54,24 +48,18 @@ describe('NgxDtPicker — inline', () => {
     const fixture = TestBed.createComponent(InlineHost);
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(
-      fixture.nativeElement.querySelector('mat-calendar'),
-    ).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('mat-calendar')).toBeTruthy();
   });
 
   it('writes the picked date back through [(value)]', async () => {
     const fixture = TestBed.createComponent(InlineHost);
     fixture.detectChanges();
     await fixture.whenStable();
-    const cell: HTMLElement = fixture.nativeElement.querySelector(
-      '.mat-calendar-body-cell',
-    );
+    const cell: HTMLElement = fixture.nativeElement.querySelector('.mat-calendar-body-cell');
     cell.click();
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(fixture.componentInstance.value()).toBeInstanceOf(
-      Temporal.PlainDate,
-    );
+    expect(fixture.componentInstance.value()).toBeInstanceOf(Temporal.PlainDate);
   });
 });
 
@@ -85,10 +73,9 @@ describe('NgxDtPicker — inline', () => {
 class OverlayHost {
   value = signal<Temporal.PlainDate | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
-  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-    'trigger',
-    { read: ElementRef },
-  );
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+    read: ElementRef,
+  });
 }
 
 @Component({
@@ -101,10 +88,9 @@ class OverlayHost {
 class DisabledOverlayHost {
   value = signal<Temporal.PlainDate | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
-  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-    'trigger',
-    { read: ElementRef },
-  );
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+    read: ElementRef,
+  });
 }
 
 function overlayPanel(): HTMLElement | null {
@@ -119,9 +105,7 @@ describe('NgxDtPicker — overlay', () => {
     fixture.detectChanges();
     expect(overlayPanel()).toBeNull();
 
-    fixture.componentInstance.picker().open(
-      fixture.componentInstance.trigger(),
-    );
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -151,9 +135,7 @@ describe('NgxDtPicker — overlay', () => {
   it('auto-closes after a date is picked in overlay mode', async () => {
     const fixture = TestBed.createComponent(OverlayHost);
     fixture.detectChanges();
-    fixture.componentInstance.picker().open(
-      fixture.componentInstance.trigger(),
-    );
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -202,16 +184,12 @@ describe('NgxDtPicker — overlay a11y', () => {
     fixture.detectChanges();
     const trigger = fixture.componentInstance.trigger().nativeElement;
     trigger.focus();
-    fixture.componentInstance.picker().open(
-      fixture.componentInstance.trigger(),
-    );
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
     fixture.detectChanges();
     await fixture.whenStable();
 
     const panel = overlayPanel()!;
-    panel.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
-    );
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -222,9 +200,7 @@ describe('NgxDtPicker — overlay a11y', () => {
   it('renders role="dialog" with aria-modal on the overlay panel', async () => {
     const fixture = TestBed.createComponent(OverlayHost);
     fixture.detectChanges();
-    fixture.componentInstance.picker().open(
-      fixture.componentInstance.trigger(),
-    );
+    fixture.componentInstance.picker().open(fixture.componentInstance.trigger());
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -257,9 +233,7 @@ describe('NgxDtPicker — overlay a11y', () => {
   `,
 })
 class ConstrainedHost {
-  value = signal<Temporal.PlainDate | null>(
-    Temporal.PlainDate.from('2026-06-15'),
-  );
+  value = signal<Temporal.PlainDate | null>(Temporal.PlainDate.from('2026-06-15'));
   min = Temporal.PlainDate.from('2026-06-10');
   max = Temporal.PlainDate.from('2026-06-20');
   // disallow the 12th
@@ -276,9 +250,9 @@ describe('NgxDtPicker — constraints', () => {
 
     const root = fixture.nativeElement as HTMLElement;
     const labelOf = (sel: string) =>
-      Array.from(
-        root.querySelectorAll<HTMLButtonElement>('.mat-calendar-body-cell'),
-      ).find((b) => b.getAttribute('aria-label')?.includes(sel));
+      Array.from(root.querySelectorAll<HTMLButtonElement>('.mat-calendar-body-cell')).find((b) =>
+        b.getAttribute('aria-label')?.includes(sel),
+      );
 
     // June 5 is before min → disabled
     const june5 = labelOf('June 5, 2026');
@@ -319,7 +293,8 @@ describe('NgxDtPicker — value bridge', () => {
     const fixture = TestBed.createComponent(InlineHost);
     fixture.detectChanges();
     await fixture.whenStable();
-    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDate>;
     const input = new FakeInput();
     picker.registerInput(input);
 
@@ -335,7 +310,8 @@ describe('NgxDtPicker — value bridge', () => {
   it('drives the calendar [selected] from the registered input value', async () => {
     const fixture = TestBed.createComponent(InlineHost);
     fixture.detectChanges();
-    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDate>;
     const input = new FakeInput();
     input._value.set(Temporal.PlainDate.from('2026-06-15'));
     picker.registerInput(input);
@@ -349,7 +325,8 @@ describe('NgxDtPicker — value bridge', () => {
   it('throws when a second, different input registers', () => {
     const fixture = TestBed.createComponent(InlineHost);
     fixture.detectChanges();
-    const picker = fixture.debugElement.children[0].componentInstance as NgxDtPicker<Temporal.PlainDate>;
+    const picker = fixture.debugElement.children[0]
+      .componentInstance as NgxDtPicker<Temporal.PlainDate>;
     picker.registerInput(new FakeInput());
     expect(() => picker.registerInput(new FakeInput())).toThrow(/single/);
   });
@@ -380,18 +357,14 @@ describe('NgxDtPicker — opens anchored to the input', () => {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `
-    <ngx-dt-picker #picker [inline]="true" type="date-range" [(range)]="range" />
-  `,
+  template: ` <ngx-dt-picker #picker [inline]="true" type="date-range" [(range)]="range" /> `,
 })
 class InlineRangeHost {
   range = signal<DateRange<Temporal.PlainDate> | null>(null);
 }
 
 function rangeCells(fixture: { nativeElement: HTMLElement }): HTMLElement[] {
-  return Array.from(
-    fixture.nativeElement.querySelectorAll<HTMLElement>('.mat-calendar-body-cell'),
-  );
+  return Array.from(fixture.nativeElement.querySelectorAll<HTMLElement>('.mat-calendar-body-cell'));
 }
 
 describe('NgxDtPicker — date-range engine', () => {
@@ -428,9 +401,7 @@ describe('NgxDtPicker — date-range engine', () => {
     const range = fixture.componentInstance.range()!;
     expect(range.start?.day).toBe(5);
     expect(range.end?.day).toBe(10);
-    expect(
-      Temporal.PlainDate.compare(range.end!, range.start!),
-    ).toBeGreaterThanOrEqual(0);
+    expect(Temporal.PlainDate.compare(range.end!, range.start!)).toBeGreaterThanOrEqual(0);
   });
 
   it('a click before the current start resets the start', async () => {
@@ -522,14 +493,7 @@ describe('NgxDtPicker — range opens anchored to the input', () => {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `
-    <ngx-dt-picker
-      #picker
-      type="time"
-      [inline]="true"
-      [(value)]="value"
-    />
-  `,
+  template: ` <ngx-dt-picker #picker type="time" [inline]="true" [(value)]="value" /> `,
 })
 class InlineTimeHost {
   value = signal<Temporal.PlainTime | null>(null);
@@ -576,9 +540,7 @@ import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-pic
 
 @Component({
   imports: [NgxDtPicker],
-  template: `
-    <ngx-dt-picker #picker type="datetime" [inline]="true" [(value)]="value" />
-  `,
+  template: ` <ngx-dt-picker #picker type="datetime" [inline]="true" [(value)]="value" /> `,
 })
 class InlineDateTimeHost {
   value = signal<Temporal.PlainDateTime | null>(null);
@@ -594,10 +556,9 @@ class InlineDateTimeHost {
 class OverlayDateTimeHost {
   value = signal<Temporal.PlainDateTime | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
-  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-    'trigger',
-    { read: ElementRef },
-  );
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+    read: ElementRef,
+  });
 }
 
 @Component({
@@ -645,9 +606,7 @@ describe('NgxDtPicker — datetime mode', () => {
     const fixture = TestBed.createComponent(InlineDateTimeHost);
     fixture.detectChanges();
     await fixture.whenStable();
-    const cell: HTMLElement = fixture.nativeElement.querySelector(
-      '.mat-calendar-body-cell',
-    );
+    const cell: HTMLElement = fixture.nativeElement.querySelector('.mat-calendar-body-cell');
     cell.click();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -659,9 +618,7 @@ describe('NgxDtPicker — datetime mode', () => {
 
   it('carries the time across a date change', async () => {
     const fixture = TestBed.createComponent(InlineDateTimeHost);
-    fixture.componentInstance.value.set(
-      Temporal.PlainDateTime.from('2026-06-21T09:30'),
-    );
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T09:30'));
     fixture.detectChanges();
     await fixture.whenStable();
     // Click a different day in the same (June 2026) view.
@@ -681,9 +638,7 @@ describe('NgxDtPicker — datetime mode', () => {
 
   it('carries the date across a time change (stepper)', async () => {
     const fixture = TestBed.createComponent(InlineDateTimeHost);
-    fixture.componentInstance.value.set(
-      Temporal.PlainDateTime.from('2026-06-21T09:30'),
-    );
+    fixture.componentInstance.value.set(Temporal.PlainDateTime.from('2026-06-21T09:30'));
     fixture.detectChanges();
     await fixture.whenStable();
     (fixture.nativeElement as HTMLElement)
@@ -857,9 +812,7 @@ describe('NgxDtPicker — datetime mode', () => {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `
-    <ngx-dt-picker #picker type="datetime-range" [inline]="true" [(range)]="range" />
-  `,
+  template: ` <ngx-dt-picker #picker type="datetime-range" [inline]="true" [(range)]="range" /> `,
 })
 class InlineDateTimeRangeHost {
   range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
@@ -885,9 +838,7 @@ class ConstrainedDateTimeRangeHost {
 }
 
 /** Minimal fake datetime range input implementing the picker's range contract. */
-class FakeDateTimeRangeInput
-  implements NgxDtPickerRangeInput<Temporal.PlainDateTime>
-{
+class FakeDateTimeRangeInput implements NgxDtPickerRangeInput<Temporal.PlainDateTime> {
   readonly _range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
   readonly range = this._range.asReadonly();
   fromPicker: DateRange<Temporal.PlainDateTime> | undefined;
@@ -950,9 +901,7 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
     expect(r.start?.day).toBe(5);
     expect(r.end?.day).toBe(10);
     expect(r.end?.hour).toBe(0);
-    expect(
-      Temporal.PlainDateTime.compare(r.end!, r.start!),
-    ).toBeGreaterThanOrEqual(0);
+    expect(Temporal.PlainDateTime.compare(r.end!, r.start!)).toBeGreaterThanOrEqual(0);
   });
 
   it('carries the start time across a date re-pick and defaults a new end to midnight', async () => {
@@ -1016,12 +965,10 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
     })
     class OverlayDateTimeRangeHost {
       range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
-      readonly picker =
-        viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
-      readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-        'trigger',
-        { read: ElementRef },
-      );
+      readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
+      readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+        read: ElementRef,
+      });
     }
     const fixture = TestBed.createComponent(OverlayDateTimeRangeHost);
     fixture.detectChanges();
@@ -1029,9 +976,7 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const cells = Array.from(
-      document.querySelectorAll<HTMLElement>(
-        '.cdk-overlay-container .mat-calendar-body-cell',
-      ),
+      document.querySelectorAll<HTMLElement>('.cdk-overlay-container .mat-calendar-body-cell'),
     );
     cells[4].click();
     fixture.detectChanges();
@@ -1047,7 +992,12 @@ describe('NgxDtPicker — datetime-range calendar composition', () => {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `<ngx-dt-picker [inline]="true" type="date-range" [monthsToDisplay]="months()" [startAt]="startAt()" />`,
+  template: `<ngx-dt-picker
+    [inline]="true"
+    type="date-range"
+    [monthsToDisplay]="months()"
+    [startAt]="startAt()"
+  />`,
 })
 class DualHost {
   months = signal<1 | 2>(2);
@@ -1056,7 +1006,12 @@ class DualHost {
 
 @Component({
   imports: [NgxDtPicker],
-  template: `<ngx-dt-picker [inline]="true" type="datetime-range" [monthsToDisplay]="2" [startAt]="startAt()" />`,
+  template: `<ngx-dt-picker
+    [inline]="true"
+    type="datetime-range"
+    [monthsToDisplay]="2"
+    [startAt]="startAt()"
+  />`,
 })
 class DualDateTimeHost {
   startAt = signal<Temporal.PlainDateTime | null>(null);
@@ -1137,10 +1092,9 @@ describe('NgxDtPicker — dual calendars (monthsToDisplay)', () => {
 class DraftHost {
   value = signal<Temporal.PlainDate | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDate>>('picker');
-  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-    'trigger',
-    { read: ElementRef },
-  );
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+    read: ElementRef,
+  });
 }
 
 function createDraftHost() {
@@ -1211,10 +1165,9 @@ describe('NgxDtPicker — draftMode', () => {
 class OverlayDtRangeHost {
   range = signal<DateRange<Temporal.PlainDateTime> | null>(null);
   readonly picker = viewChild.required<NgxDtPicker<Temporal.PlainDateTime>>('picker');
-  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>(
-    'trigger',
-    { read: ElementRef },
-  );
+  readonly trigger = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('trigger', {
+    read: ElementRef,
+  });
 }
 
 describe('NgxDtPicker — datetime-range time panels + footer', () => {
@@ -1251,9 +1204,7 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     );
     fixture.detectChanges();
     await fixture.whenStable();
-    const upHours = root(fixture).querySelectorAll<HTMLButtonElement>(
-      '[data-testid="up-hour"]',
-    );
+    const upHours = root(fixture).querySelectorAll<HTMLButtonElement>('[data-testid="up-hour"]');
     upHours[0].click(); // start panel
     fixture.detectChanges();
     await fixture.whenStable();
@@ -1273,9 +1224,7 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     );
     fixture.detectChanges();
     await fixture.whenStable();
-    const upHours = root(fixture).querySelectorAll<HTMLButtonElement>(
-      '[data-testid="up-hour"]',
-    );
+    const upHours = root(fixture).querySelectorAll<HTMLButtonElement>('[data-testid="up-hour"]');
     upHours[1].click(); // end panel
     fixture.detectChanges();
     await fixture.whenStable();
@@ -1347,9 +1296,7 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const now = () =>
-      document.querySelector<HTMLButtonElement>(
-        '.cdk-overlay-container [data-testid="dt-now"]',
-      )!;
+      document.querySelector<HTMLButtonElement>('.cdk-overlay-container [data-testid="dt-now"]')!;
     now().click();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -1381,9 +1328,7 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
     );
     fixture.detectChanges();
     await fixture.whenStable();
-    root(fixture)
-      .querySelector<HTMLButtonElement>('[data-testid="dt-clear"]')!
-      .click();
+    root(fixture).querySelector<HTMLButtonElement>('[data-testid="dt-clear"]')!.click();
     fixture.detectChanges();
     await fixture.whenStable();
     const r = fixture.componentInstance.range();

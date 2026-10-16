@@ -9,7 +9,9 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@constantine-24/ngx-datetime-picker": ["./projects/ngx-datetime-picker/src/public-api.ts"],
-      "@constantine-24/ngx-datetime-picker/temporal": ["./projects/ngx-datetime-picker/temporal/src/public-api.ts"]
+      "@constantine-24/ngx-datetime-picker/temporal": [
+        "./projects/ngx-datetime-picker/temporal/src/public-api.ts"
+      ]
     },
     "skipLibCheck": true,
     "isolatedModules": true,

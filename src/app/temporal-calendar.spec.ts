@@ -32,8 +32,7 @@ describe('demo: TemporalDateAdapter drives MatCalendar', () => {
     const fixture = TestBed.createComponent(MatCalendar<Temporal.PlainDate>);
     fixture.componentInstance.startAt = Temporal.PlainDate.from('2026-06-20');
     fixture.detectChanges();
-    const body: HTMLElement | null =
-      fixture.nativeElement.querySelector('.mat-calendar-body');
+    const body: HTMLElement | null = fixture.nativeElement.querySelector('.mat-calendar-body');
     expect(body).toBeTruthy();
     // The month grid should contain day cells rendered via the adapter.
     expect(

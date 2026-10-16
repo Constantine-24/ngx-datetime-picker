@@ -41,13 +41,7 @@ describe('NgxDtDateRangeInput — Reactive Forms', () => {
   beforeEach(setup);
 
   @Component({
-    imports: [
-      NgxDtDateRangeInput,
-      NgxDtStartDate,
-      NgxDtEndDate,
-      NgxDtPicker,
-      ReactiveFormsModule,
-    ],
+    imports: [NgxDtDateRangeInput, NgxDtStartDate, NgxDtEndDate, NgxDtPicker, ReactiveFormsModule],
     template: `
       <ngx-dt-date-range-input [rangePicker]="picker" [formControl]="ctrl">
         <input ngxDtStartDate />
@@ -66,10 +60,7 @@ describe('NgxDtDateRangeInput — Reactive Forms', () => {
     await fixture.whenStable();
 
     fixture.componentInstance.ctrl.setValue(
-      new DateRange(
-        Temporal.PlainDate.from('2026-06-10'),
-        Temporal.PlainDate.from('2026-06-20'),
-      ),
+      new DateRange(Temporal.PlainDate.from('2026-06-10'), Temporal.PlainDate.from('2026-06-20')),
     );
     fixture.detectChanges();
     const { start, end } = startEnd(fixture);
@@ -89,13 +80,7 @@ describe('NgxDtDateRangeInput — ngModel', () => {
   beforeEach(setup);
 
   @Component({
-    imports: [
-      NgxDtDateRangeInput,
-      NgxDtStartDate,
-      NgxDtEndDate,
-      NgxDtPicker,
-      FormsModule,
-    ],
+    imports: [NgxDtDateRangeInput, NgxDtStartDate, NgxDtEndDate, NgxDtPicker, FormsModule],
     template: `
       <ngx-dt-date-range-input [rangePicker]="picker" [(ngModel)]="value">
         <input ngxDtStartDate />
@@ -119,12 +104,8 @@ describe('NgxDtDateRangeInput — ngModel', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.componentInstance.value?.start).toEqual(
-      Temporal.PlainDate.from('2026-06-10'),
-    );
-    expect(fixture.componentInstance.value?.end).toEqual(
-      Temporal.PlainDate.from('2026-06-20'),
-    );
+    expect(fixture.componentInstance.value?.start).toEqual(Temporal.PlainDate.from('2026-06-10'));
+    expect(fixture.componentInstance.value?.end).toEqual(Temporal.PlainDate.from('2026-06-20'));
   });
 });
 
@@ -132,13 +113,7 @@ describe('NgxDtDateRangeInput — Signal Forms', () => {
   beforeEach(setup);
 
   @Component({
-    imports: [
-      NgxDtDateRangeInput,
-      NgxDtStartDate,
-      NgxDtEndDate,
-      NgxDtPicker,
-      FormField,
-    ],
+    imports: [NgxDtDateRangeInput, NgxDtStartDate, NgxDtEndDate, NgxDtPicker, FormField],
     template: `
       <ngx-dt-date-range-input [rangePicker]="picker" [formField]="f.range">
         <input ngxDtStartDate />
@@ -174,10 +149,7 @@ describe('NgxDtDateRangeInput — Signal Forms', () => {
     fixture.componentInstance.f
       .range()
       .value.set(
-        new DateRange(
-          Temporal.PlainDate.from('2026-07-01'),
-          Temporal.PlainDate.from('2026-07-09'),
-        ),
+        new DateRange(Temporal.PlainDate.from('2026-07-01'), Temporal.PlainDate.from('2026-07-09')),
       );
     fixture.detectChanges();
     await fixture.whenStable();

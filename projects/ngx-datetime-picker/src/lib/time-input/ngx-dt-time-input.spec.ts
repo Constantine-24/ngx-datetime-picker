@@ -14,7 +14,14 @@ import { NgxDtTimeInput } from './ngx-dt-time-input';
   imports: [NgxDtPicker, NgxDtTimeInput, ReactiveFormsModule],
   template: `
     <input [ngxDtTimeInput]="picker" [formControl]="ctrl" />
-    <ngx-dt-picker #picker type="time" [min]="min()" [max]="max()" [hourCycle]="hourCycle()" [timeFilter]="timeFilter()" />
+    <ngx-dt-picker
+      #picker
+      type="time"
+      [min]="min()"
+      [max]="max()"
+      [hourCycle]="hourCycle()"
+      [timeFilter]="timeFilter()"
+    />
   `,
 })
 class Host {
@@ -113,9 +120,7 @@ describe('NgxDtTimeInput', () => {
   it('Alt+ArrowDown opens the picker', async () => {
     const fixture = await render();
     const el = input(fixture);
-    el.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }),
-    );
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }));
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.componentInstance.picker().isOpen()).toBe(true);
