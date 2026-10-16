@@ -1,0 +1,61 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.range-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--mat-sys-corner-extra-small);
+
+  &:focus-within {
+    border-color: var(--mat-sys-primary);
+    box-shadow: inset 0 0 0 1px var(--mat-sys-primary);
+  }
+
+  input {
+    inline-size: 6.5rem;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    font: var(--mat-sys-body-large);
+  }
+
+  span {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.range-field-wide input {
+  inline-size: 10rem;
+}
+
+.value {
+  margin: 0.75rem 0 0;
+  font:
+    0.875rem/1.5 ui-monospace,
+    'SF Mono',
+    'Cascadia Code',
+    Menlo,
+    Consolas,
+    monospace;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.forms {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
