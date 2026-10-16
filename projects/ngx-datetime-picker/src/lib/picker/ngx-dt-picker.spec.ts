@@ -3,13 +3,24 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { DateRange } from '@angular/material/datepicker';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxDtPicker, NgxDtPickerInput, NgxDtPickerRangeInput } from './ngx-dt-picker';
 import { Directionality, type Direction } from '@angular/cdk/bidi';
 import { Subject } from 'rxjs';
+
+// Several specs click calendar cells by index and assume the calendar opens on
+// June 2026. Pin "today" so they do not drift with the wall clock; only Date is
+// faked, so real timers keep fixture.whenStable() working.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-20T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 @Component({
   imports: [NgxDtPicker],
@@ -561,7 +572,7 @@ describe('NgxDtPicker — time mode', () => {
 
 // --- Plan 6: datetime mode -----------------------------------------------
 
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 
 @Component({
   imports: [NgxDtPicker],

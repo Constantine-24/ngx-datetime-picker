@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtTimeInput } from './ngx-dt-time-input';

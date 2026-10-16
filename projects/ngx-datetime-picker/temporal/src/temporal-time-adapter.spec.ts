@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { NgxDtTimeAdapter } from 'ngx-datetime-picker';
+import { NgxDtTimeAdapter } from '@constantine-24/ngx-datetime-picker';
 import { describe, expect, it } from 'vitest';
 import { Temporal } from 'temporal-polyfill';
 import { TemporalTimeAdapter } from './temporal-time-adapter';

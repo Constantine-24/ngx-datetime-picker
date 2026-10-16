@@ -38,7 +38,7 @@ First public release: a configurable Angular date & time picker built on
 - **Adapter-agnostic core** built on Material's `DateAdapter<D>` and
   `MatCalendar` — works with any `DateAdapter` (including Material's native
   `Date`, Luxon, and date-fns adapters).
-- **Flagship Temporal adapter** in the `ngx-datetime-picker/temporal` secondary
+- **Flagship Temporal adapter** in the `@constantine-24/ngx-datetime-picker/temporal` secondary
   entry point: `TemporalDateAdapter` (`Temporal.PlainDate`), `TemporalTimeAdapter`
   (`Temporal.PlainTime`), and `TemporalDateTimeAdapter` (`Temporal.PlainDateTime`),
   with `provideTemporalDateAdapter()`, `provideTemporalTimeAdapter()`,
@@ -94,7 +94,7 @@ First public release: a configurable Angular date & time picker built on
 
 #### Packaging
 
-- Two entry points (`ngx-datetime-picker` core and `ngx-datetime-picker/temporal`),
+- Two entry points (`@constantine-24/ngx-datetime-picker` core and `@constantine-24/ngx-datetime-picker/temporal`),
   `sideEffects: false`, shipped with TSDoc and a full README.
 
 ### Compatibility

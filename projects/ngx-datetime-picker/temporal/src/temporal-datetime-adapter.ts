@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
-import { NgxDtDateTimeAdapter, NgxDtTimeAdapter } from 'ngx-datetime-picker';
+import { NgxDtDateTimeAdapter, NgxDtTimeAdapter } from '@constantine-24/ngx-datetime-picker';
 import { Temporal } from 'temporal-polyfill';
 
 /** Internal sentinel returned by `invalid()`; never an instanceof PlainDateTime. */

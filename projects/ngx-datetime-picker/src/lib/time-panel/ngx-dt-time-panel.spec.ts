@@ -4,7 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtTimePanel } from './ngx-dt-time-panel';
 

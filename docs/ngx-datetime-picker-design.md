@@ -17,7 +17,7 @@ The repo is currently a clean **Angular 22** single-app workspace (TypeScript 6,
 - **Range UX:** **Dual calendar + two inputs** by default (configurable to single month).
 - **Time UX:** **Stepper inputs** by default (custom); optional "list" mode can reuse `MatTimepicker`.
 - **Display:** **Overlay popup (default) + inline** mode.
-- **Naming:** prefix **`ngx-dt`**, package **`ngx-datetime-picker`**.
+- **Naming:** prefix **`ngx-dt`**, package **`ngx-datetime-picker`** (published on npm as **`@constantine-24/ngx-datetime-picker`** — the unscoped name was taken).
 - **Timezone model:** **wall-clock / zone-naive v1** (Temporal `PlainDate`/`PlainDateTime`/`PlainTime`), matching Material's zone-naive `DateAdapter`. Instant/zone conversion is the consumer's documented responsibility. The generic `DateAdapter<D>` is the seam: a `ZonedDateTime` adapter can ship later as its own entry point with no breaking change. (Avoids DST gap/overlap complexity in the time stepper.)
 - **Actions & presets:** ship a built-in **action footer** (Apply/Cancel — required for datetime confirm — plus Clear and Today/Now) **and a content-projection seam** (mirrors `<mat-datepicker-actions>`) for custom footers / preset ranges. A built-in preset *list* (`[presets]`) is **deferred to post-v1**.
 

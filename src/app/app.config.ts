@@ -5,7 +5,7 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 
 import { routes } from './app.routes';
 
