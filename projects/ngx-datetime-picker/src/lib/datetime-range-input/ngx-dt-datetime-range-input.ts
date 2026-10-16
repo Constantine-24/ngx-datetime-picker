@@ -278,7 +278,7 @@ export class NgxDtDateTimeRangeInput<T = unknown>
  */
 @Directive()
 export abstract class NgxDtDateTimeRangePartBase<T = unknown>
-  implements NgxDtDateTimeRangePart<T>
+  implements NgxDtDateTimeRangePart<T>, OnInit
 {
   protected readonly elementRef =
     inject<ElementRef<HTMLInputElement>>(ElementRef);

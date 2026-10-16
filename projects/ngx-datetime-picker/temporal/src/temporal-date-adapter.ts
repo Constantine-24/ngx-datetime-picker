@@ -11,7 +11,7 @@ function range<T>(length: number, fn: (i: number) => T): T[] {
 
 @Injectable()
 export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
-  private fieldOrder: Array<'year' | 'month' | 'day'> = ['year', 'month', 'day'];
+  private fieldOrder: ('year' | 'month' | 'day')[] = ['year', 'month', 'day'];
 
   constructor() {
     super();
@@ -140,7 +140,7 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   }
 
   /** Derives field order (e.g. ['month','day','year'] for en-US) from Intl. */
-  private numericFieldOrder(): Array<'year' | 'month' | 'day'> {
+  private numericFieldOrder(): ('year' | 'month' | 'day')[] {
     const ref = new Date(Date.UTC(2026, 0, 2)); // y=2026, m=01, d=02 — all distinct
     return new Intl.DateTimeFormat(this.locale, {
       year: 'numeric',

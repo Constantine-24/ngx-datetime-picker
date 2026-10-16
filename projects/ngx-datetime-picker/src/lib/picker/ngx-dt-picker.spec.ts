@@ -1422,6 +1422,15 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
       .componentInstance as NgxDtPicker<Temporal.PlainDateTime>;
   }
 
+  /** Template-only (protected) members these specs reach into. */
+  interface DateTimeRangeInternals {
+    startTimePanelMax(): Temporal.PlainDateTime | null;
+    endTimePanelMin(): Temporal.PlainDateTime | null;
+    onStartTimeChange(time: Temporal.PlainTime | null): void;
+  }
+  const internals = (picker: NgxDtPicker<Temporal.PlainDateTime>) =>
+    picker as unknown as DateTimeRangeInternals;
+
   it('exposes symmetric start/end time-panel bounds on a shared day', async () => {
     // datetime-range picker with a range whose start and end fall on the same day.
     const p = createDateTimeRangePicker();
@@ -1432,14 +1441,14 @@ describe('NgxDtPicker — datetime-range time panels + footer', () => {
       ),
     );
     // start ceiling is the end time; end floor is the start time (same day).
-    expect((p as any).startTimePanelMax()?.toString()).toContain('17:00');
-    expect((p as any).endTimePanelMin()?.toString()).toContain('09:00');
+    expect(internals(p).startTimePanelMax()?.toString()).toContain('17:00');
+    expect(internals(p).endTimePanelMin()?.toString()).toContain('09:00');
   });
 
   it('stepping a start time before any date anchors to today (intentional parity)', async () => {
     const p = createDateTimeRangePicker();
     p.range.set(new DateRange<Temporal.PlainDateTime>(null, null));
-    (p as any).onStartTimeChange(Temporal.PlainTime.from('08:30') as unknown as never);
+    internals(p).onStartTimeChange(Temporal.PlainTime.from('08:30'));
     await Promise.resolve();
     const start = p.range()?.start;
     expect(start).not.toBeNull();
