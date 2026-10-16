@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Nothing yet._
 
-## [1.0.0] - 2026-06-21
+## [1.0.0] - 2026-10-16
 
 First public release: a configurable Angular date & time picker built on
 `@angular/cdk` and `@angular/material` primitives, adapter-agnostic with a TC39
