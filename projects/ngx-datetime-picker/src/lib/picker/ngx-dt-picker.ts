@@ -833,7 +833,11 @@ export class NgxDtPicker<D = unknown> {
   }
 
   toggle(origin?: NgxDtOrigin): void {
-    this._open() ? this.close() : this.open(origin);
+    if (this._open()) {
+      this.close();
+    } else {
+      this.open(origin);
+    }
   }
 
   /** Write a value through the registered input seam, else the model. Buffers into draft when draft is active. */
