@@ -9,7 +9,7 @@
 
 - TDD by default: write a failing spec that captures the behaviour, confirm it fails for the right reason, then make it pass. Use scoped runs during the loop (see `commands.md`).
 - Pure refactors: confirm the affected behaviour is covered and green before and after.
-- Keep changes to what the task asks. A pre-existing bug or unrelated issue found mid-task is a follow-up in the summary, not a drive-by fix — unless the requested behaviour can't work without it.
+- Keep changes to what the task asks. A pre-existing bug or unrelated issue found mid-task is a follow-up in the summary, not a drive-by fix — unless the requested behaviour can't work without it. Follow-ups that aren't picked up right away go to `BACKLOG.md`.
 - User-visible changes (new input, behaviour change, fix) get a CHANGELOG entry under `## [Unreleased]` in `projects/ngx-datetime-picker/CHANGELOG.md`, in Keep a Changelog sections (Added / Changed / Deprecated / Removed / Fixed / Security).
 - Public API or behaviour changes also update `projects/ngx-datetime-picker/README.md` (the npm page) and, if they're showcase-worthy, the demo.
 - Prefer targeted edits over whole-file rewrites.

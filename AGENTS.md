@@ -9,6 +9,7 @@ This file exists for cross-tool compatibility (Codex, Cursor, Aider, Copilot, �
 - `projects/ngx-datetime-picker/` — the publishable library (core entry `src/`, Temporal secondary entry `temporal/`)
 - `src/` — the demo app (consumes only the public API)
 - `docs/` — design record and release notes
+- `BACKLOG.md` — deferred work (dependency upgrades, follow-ups)
 - `.github/` — CI, GitHub Pages deploy, npm release workflows; issue/PR templates
 
 ## Rule modules (project-wide — read all of them)
