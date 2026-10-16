@@ -1,0 +1,19 @@
+---
+description: Project rules for ngx-datetime-picker — always apply
+alwaysApply: true
+---
+
+The authoritative agent rules for this repository live in `CLAUDE.md` and `.claude/rules/*.md`. Read and follow them; do not rely on this file's summary.
+
+@CLAUDE.md
+@.claude/rules/architecture.md
+@.claude/rules/commands.md
+@.claude/rules/code-style.md
+@.claude/rules/angular-components.md
+@.claude/rules/styling.md
+@.claude/rules/accessibility.md
+@.claude/rules/workflow.md
+@.claude/rules/review-gate.md
+@.claude/rules/release.md
+
+When working under `projects/ngx-datetime-picker/`, also read `projects/ngx-datetime-picker/CLAUDE.md`; under `src/`, read `src/CLAUDE.md`.

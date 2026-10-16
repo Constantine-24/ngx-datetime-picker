@@ -112,7 +112,5 @@ First public release: a configurable Angular date & time picker built on
   header. Use the header buttons to move both months together. This is a
   structural constraint of the underlying `MatCalendar`.
 
-<!-- Replace <OWNER>/<REPO> once a git remote is configured. -->
-
-[Unreleased]: https://github.com/<OWNER>/<REPO>/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/<OWNER>/<REPO>/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Constantine-24/ngx-datetime-picker/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Constantine-24/ngx-datetime-picker/releases/tag/v1.0.0
