@@ -21,6 +21,7 @@ import { ExampleCard } from '../shared/example-card';
 import {
   DRAFT_SNIPPET,
   FORMS_SNIPPET,
+  MEETING_COMPONENT_SNIPPET,
   MEETING_SNIPPET,
   SHIFT_SNIPPET,
   STAY_SNIPPET,
@@ -56,6 +57,7 @@ export class Examples {
     validation: VALIDATION_SNIPPET,
     stay: STAY_SNIPPET,
     meeting: MEETING_SNIPPET,
+    meetingComponent: MEETING_COMPONENT_SNIPPET,
     shift: SHIFT_SNIPPET,
     draft: DRAFT_SNIPPET,
     forms: FORMS_SNIPPET,

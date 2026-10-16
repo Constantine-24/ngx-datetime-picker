@@ -24,10 +24,14 @@ export const DEFAULT_PLAYGROUND_CONFIG: PlaygroundConfig = {
 };
 
 /** The copy-pasteable code shown next to the live playground picker. */
-export interface PlaygroundSnippet {
+interface PlaygroundSnippet {
   readonly config: string;
+  readonly component: string;
   readonly template: string;
 }
+
+/** Marks where the class members start in `PlaygroundSnippet.component`. */
+export const COMPONENT_MEMBERS_MARKER = '// In your component class:';
 
 export const hasTime = (type: NgxDtPickerType): boolean =>
   type === 'time' || type === 'datetime' || type === 'datetime-range';
@@ -45,7 +49,15 @@ const PROVIDERS: Record<NgxDtPickerType, string> = {
   'datetime-range': 'provideTemporalDateTimeAdapter',
 };
 
-/** Builds the provider setup and template that reproduce `config`. */
+const VALUE_TYPES: Record<NgxDtPickerType, string> = {
+  date: 'Temporal.PlainDate',
+  'date-range': 'Temporal.PlainDate',
+  time: 'Temporal.PlainTime',
+  datetime: 'Temporal.PlainDateTime',
+  'datetime-range': 'Temporal.PlainDateTime',
+};
+
+/** Builds the provider setup, component members and template that reproduce `config`. */
 export function buildSnippet(config: PlaygroundConfig): PlaygroundSnippet {
   const provider = PROVIDERS[config.type];
   return {
@@ -54,8 +66,38 @@ export function buildSnippet(config: PlaygroundConfig): PlaygroundSnippet {
       '',
       `providers: [${provider}()]`,
     ].join('\n'),
+    component: componentCode(config),
     template: config.inline ? inlineTemplate(config) : popupTemplate(config),
   };
+}
+
+function componentCode(config: PlaygroundConfig): string {
+  const { type, inline } = config;
+  const range = isRange(type);
+  const value = range ? `DateRange<${VALUE_TYPES[type]}>` : VALUE_TYPES[type];
+
+  const imports = [
+    `import { signal } from '@angular/core';`,
+    ...(inline ? [] : [`import { form } from '@angular/forms/signals';`]),
+    ...(range ? [`import { DateRange } from '@constantine-24/ngx-datetime-picker';`] : []),
+    `import { Temporal } from 'temporal-polyfill';`,
+  ];
+
+  const field = range ? 'period' : 'selected';
+  const members = [
+    inline
+      ? `protected readonly ${range ? 'range' : 'value'} = signal<${value} | null>(null);`
+      : `protected readonly pickerForm = form(signal<{ ${field}: ${value} | null }>({ ${field}: null }));`,
+  ];
+  if (hasDate(type) && config.weekdaysOnly) {
+    members.push(
+      '// The calendar passes the date part. Typing the parameter as `unknown` keeps the',
+      '// picker generic, so the same #picker ref also fits <ngx-dt-toggle [for]>.',
+      'protected readonly weekdaysOnly = (date: unknown) => (date as Temporal.PlainDate).dayOfWeek <= 5;',
+    );
+  }
+
+  return [...imports, '', COMPONENT_MEMBERS_MARKER, ...members].join('\n');
 }
 
 function pickerAttributes(config: PlaygroundConfig): string[] {
@@ -103,7 +145,7 @@ function popupTemplate(config: PlaygroundConfig): string {
         ? ['ngx-dt-date-range-input', 'ngxDtStartDate', 'ngxDtEndDate']
         : ['ngx-dt-datetime-range-input', 'ngxDtStartDateTime', 'ngxDtEndDateTime'];
     return [
-      `<${container} [rangePicker]="picker" [formField]="form.period" ariaLabel="Period">`,
+      `<${container} [rangePicker]="picker" [formField]="pickerForm.period" ariaLabel="Period">`,
       `  <input ${start} aria-label="Start" />`,
       `  <input ${end} aria-label="End" />`,
       `</${container}>`,
@@ -116,7 +158,7 @@ function popupTemplate(config: PlaygroundConfig): string {
   return [
     '<mat-form-field>',
     `  <mat-label>${label}</mat-label>`,
-    `  <input matInput [${directive}]="picker" [formField]="form.selected" />`,
+    `  <input matInput [${directive}]="picker" [formField]="pickerForm.selected" />`,
     '  <ngx-dt-toggle matSuffix [for]="picker" />',
     '</mat-form-field>',
     picker,

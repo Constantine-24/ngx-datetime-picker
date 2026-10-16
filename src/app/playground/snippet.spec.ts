@@ -80,4 +80,35 @@ describe('buildSnippet', () => {
     const { template } = buildSnippet(config({ type: 'date', inline: true, draftMode: true }));
     expect(template).not.toContain('draftMode');
   });
+
+  it('declares the Signal Forms model a popup template binds to', () => {
+    const single = buildSnippet(config({ type: 'time' }));
+    expect(single.template).toContain('[formField]="pickerForm.selected"');
+    expect(single.component).toContain(
+      'pickerForm = form(signal<{ selected: Temporal.PlainTime | null }>({ selected: null }))',
+    );
+
+    const range = buildSnippet(config({ type: 'datetime-range' }));
+    expect(range.template).toContain('[formField]="pickerForm.period"');
+    expect(range.component).toContain(
+      'signal<{ period: DateRange<Temporal.PlainDateTime> | null }>({ period: null })',
+    );
+  });
+
+  it('declares the signal an inline template binds to', () => {
+    expect(buildSnippet(config({ type: 'datetime', inline: true })).component).toContain(
+      'value = signal<Temporal.PlainDateTime | null>(null)',
+    );
+    expect(buildSnippet(config({ type: 'date-range', inline: true })).component).toContain(
+      'range = signal<DateRange<Temporal.PlainDate> | null>(null)',
+    );
+  });
+
+  it('types the date filter parameter as unknown so the picker stays NgxDtPicker<unknown>', () => {
+    const { component } = buildSnippet(config({ type: 'datetime', weekdaysOnly: true }));
+    expect(component).toContain(
+      'weekdaysOnly = (date: unknown) => (date as Temporal.PlainDate).dayOfWeek <= 5',
+    );
+    expect(buildSnippet(config({ type: 'date' })).component).not.toContain('weekdaysOnly');
+  });
 });
