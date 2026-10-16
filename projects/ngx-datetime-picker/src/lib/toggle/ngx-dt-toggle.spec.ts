@@ -3,7 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtToggle } from './ngx-dt-toggle';

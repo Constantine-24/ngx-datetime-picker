@@ -7,7 +7,7 @@ import { Temporal } from 'temporal-polyfill';
 import {
   provideTemporalDateAdapter,
   TemporalDateAdapter,
-} from 'ngx-datetime-picker/temporal';
+} from '@constantine-24/ngx-datetime-picker/temporal';
 import { describe, expect, it } from 'vitest';
 
 describe('demo: TemporalDateAdapter drives MatCalendar', () => {

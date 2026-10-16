@@ -18,7 +18,7 @@ import {
   NgxDtStartDateTime,
   NgxDtTimeInput,
   NgxDtToggle,
-} from 'ngx-datetime-picker';
+} from '@constantine-24/ngx-datetime-picker';
 
 @Component({
   selector: 'app-root',

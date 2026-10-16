@@ -18,7 +18,7 @@ The Temporal adapter lives in a secondary entry point so the `temporal-polyfill`
 ## Installation
 
 ```bash
-npm install ngx-datetime-picker @angular/material @angular/cdk temporal-polyfill
+npm install @constantine-24/ngx-datetime-picker @angular/material @angular/cdk temporal-polyfill
 ```
 
 `temporal-polyfill` is an **optional** peer dependency — only required where native `Temporal` is unavailable (e.g. Safari prior to mid-2026).
@@ -41,7 +41,7 @@ Each provider accepts an optional `MatDateFormats` override; the defaults are `N
 
 ```ts
 // app.config.ts
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -60,7 +60,7 @@ All examples use `provideTemporalDateAdapter()` (or the appropriate variant prov
 ### Date — inline
 
 ```ts
-import { NgxDtPicker } from 'ngx-datetime-picker';
+import { NgxDtPicker } from '@constantine-24/ngx-datetime-picker';
 ```
 
 ```html
@@ -96,7 +96,7 @@ Provide `provideTemporalDateAdapter()` for this variant. The `rangeCtrl` value t
 
 ```ts
 // app.config.ts — use provideTemporalTimeAdapter() for this variant
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 ```
 
 ```html
@@ -112,7 +112,7 @@ import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 
 ```ts
 // app.config.ts — use provideTemporalDateTimeAdapter() for this variant
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 ```
 
 ```html
