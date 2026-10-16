@@ -32,8 +32,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Type-check (library sources + specs)
-        run: npx tsc -p projects/ngx-datetime-picker/tsconfig.spec.json --noEmit
+      - name: Type-check (library + demo specs)
+        run: |
+          npx tsc -p projects/ngx-datetime-picker/tsconfig.spec.json --noEmit
+          npx tsc -p tsconfig.spec.json --noEmit
 
       - name: Unit tests
         run: npm run test:ci
