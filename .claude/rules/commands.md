@@ -1,6 +1,6 @@
 # Commands & Environment
 
-Node: use the version CI uses (`.github/workflows/ci.yml`). Package manager: npm (`packageManager` in `package.json`).
+Node: use the version CI uses (`.nvmrc`, Node 24). Package manager: npm 11 (`packageManager` in `package.json`). npm 10.9 crashes while resolving this dependency graph (`Cannot read properties of null (reading 'edgesOut')`, from Vitest's optional peers), so add or upgrade dependencies with npm 11 (`npx npm@11 install …` on older Node). `npm ci` from the lockfile works with either.
 
 | Script                 | Runs                                         | Use                                            |
 | ---------------------- | -------------------------------------------- | ---------------------------------------------- |
