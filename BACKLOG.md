@@ -43,7 +43,7 @@ Found during the 2026-10-16 publish prep. Each one changes library behaviour or 
 ### Typed `dateFilter` / `timeFilter` predicates don't compile with a shared `#picker` ref
 
 - **What:** the filters are typed `(date: D) => boolean` (`ngx-dt-picker.ts`, `dateFilter` / `timeFilter` inputs). A predicate typed `(date: Temporal.PlainDate)` pins the picker to `NgxDtPicker<PlainDate>`. That ref no longer fits `<ngx-dt-toggle [for]>`, which takes `NgxDtPicker` (that is, `<unknown>`). In `datetime` mode, `D` gets inferred from whichever filter is bound. Consumers have to write `(date: unknown) => (date as Temporal.PlainDate)…`, as the demo and README snippets do today.
-- **Ideas:** let the toggle accept a narrow structural interface (it only needs open/close state, disabled and the panel id), so any `NgxDtPicker<D>` fits. Type the filters by the part they actually receive (the date part for `dateFilter`, the time part for `timeFilter`) rather than by `D`.
+- **Ideas:** let the toggle accept a narrow structural interface (it only calls `isOpen()` and `toggle(origin)` on the picker), so any `NgxDtPicker<D>` fits. Type the filters by the part they actually receive (the date part for `dateFilter`, the time part for `timeFilter`) rather than by `D`.
 - **Done when:** a consumer can write `weekdaysOnly = (date: Temporal.PlainDate) => date.dayOfWeek <= 5` with a shared `#picker` ref, and it compiles under `strictTemplates`. The `unknown` workaround and its comments are gone from the demo, the playground's snippet generator and the README. Any typing change must widen, never narrow, what compiles today (`.claude/rules/architecture.md`).
 
 ### Variant-aware default accessible name for the panel
