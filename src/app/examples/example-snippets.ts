@@ -32,10 +32,17 @@ export const MEETING_SNIPPET = `<mat-form-field>
   [minuteStep]="15"
   [dateFilter]="weekdaysOnly"
   [timeFilter]="businessHours"
-/>
+/>`;
 
-// weekdaysOnly = (date: Temporal.PlainDate) => date.dayOfWeek <= 5;
-// businessHours = (time: Temporal.PlainTime) => time.hour >= 9 && time.hour < 17;`;
+export const MEETING_COMPONENT_SNIPPET = `// The picker passes the date part to dateFilter and the time part to timeFilter.
+// Typing the parameters as \`unknown\` keeps the picker generic, so the same
+// #picker ref also fits <ngx-dt-toggle [for]>.
+protected readonly meeting = new FormControl<Temporal.PlainDateTime | null>(null);
+protected readonly weekdaysOnly = (date: unknown) => (date as Temporal.PlainDate).dayOfWeek <= 5;
+protected readonly businessHours = (time: unknown) => {
+  const { hour } = time as Temporal.PlainTime;
+  return hour >= 9 && hour < 17;
+};`;
 
 export const SHIFT_SNIPPET = `<ngx-dt-datetime-range-input [rangePicker]="picker" [formControl]="shift"
   ariaLabel="Shift">

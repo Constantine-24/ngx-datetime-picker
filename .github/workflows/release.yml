@@ -28,7 +28,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # Trusted publishing needs npm >= 11.5.1.
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@11
 
       - run: npm ci
 
@@ -46,7 +46,13 @@ jobs:
 
       - name: Publish to npm
         working-directory: dist/ngx-datetime-picker
-        run: npm publish --provenance --access public
+        # Prereleases (v1.2.0-rc.1) go to the "next" dist-tag so they never become "latest".
+        run: |
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -55,8 +61,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           NOTES="docs/releases/${GITHUB_REF_NAME}.md"
+          PRERELEASE=$([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease || true)
           if [ -f "$NOTES" ]; then
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$NOTES"
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$NOTES" $PRERELEASE
           else
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes $PRERELEASE
           fi

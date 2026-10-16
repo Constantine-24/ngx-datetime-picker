@@ -16,7 +16,12 @@ import { CodeBlock } from './code-block';
       </div>
       <details>
         <summary>Show code</summary>
-        <app-code-block label="Template" [code]="code()" />
+        <div class="code">
+          @if (componentCode(); as component) {
+            <app-code-block label="Component" [code]="component" />
+          }
+          <app-code-block label="Template" [code]="code()" />
+        </div>
       </details>
     </article>
   `,
@@ -57,6 +62,11 @@ import { CodeBlock } from './code-block';
       outline-offset: 2px;
       border-radius: var(--mat-sys-corner-extra-small);
     }
+    .code {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
     details[open] summary {
       margin-block-end: 0.75rem;
     }
@@ -66,6 +76,8 @@ export class ExampleCard {
   readonly heading = input.required<string>();
   readonly description = input.required<string>();
   readonly code = input.required<string>();
+  /** Optional TypeScript (component members) the template relies on. */
+  readonly componentCode = input<string>();
 
   protected readonly headingId = computed(
     () =>

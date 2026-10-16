@@ -7,13 +7,23 @@ import { By } from '@angular/platform-browser';
 import { DateRange } from '@angular/material/datepicker';
 import { Temporal } from 'temporal-polyfill';
 import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import {
   NgxDtDateTimeRangeInput,
   NgxDtEndDateTime,
   NgxDtStartDateTime,
 } from './ngx-dt-datetime-range-input';
+
+// Specs click calendar cells by index and assume the calendar opens on June 2026.
+// Pin "today" (Date only, so real timers keep fixture.whenStable() working).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-20T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 @Component({
   imports: [
