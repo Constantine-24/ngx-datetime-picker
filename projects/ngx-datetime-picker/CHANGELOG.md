@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Built with Angular 22.2.3 and ng-packagr 22.2.4 (previously 22.0.x). The peer
+  dependency range is unchanged (`^22.0.0`): an Angular 22.0.2 application
+  was verified to build and run against this package.
 
 ## [1.0.0] - 2026-10-16
 

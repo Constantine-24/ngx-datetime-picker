@@ -11,7 +11,7 @@ Read this before changing the picker, the inputs or the adapters. The public con
 - **Single-generic type bridge.** In datetime modes `D` = `PlainDateTime`, while the calendar runs the `PlainDate` adapter and the panel the `PlainTime` adapter. Bridge with documented `as unknown as D` casts only at those template seams.
 - **Optional DI.** `DateAdapter`, the datetime bridge and `Directionality` are injected `{ optional: true }`. The range selection strategy is resolved lazily through `injector.get(MAT_DATE_RANGE_SELECTION_STRATEGY)` — resolving it eagerly would instantiate `DefaultMatCalendarRangeStrategy` (which needs `DateAdapter`) and break time-only apps.
 
-## Pinned Material internals (Material 22.0.x)
+## Pinned Material internals (verified on Material 22.0.x and 22.2.3)
 
 These are deliberate dependencies on non-public Material API, each covered by integration specs so a Material upgrade fails loudly. Check them first on every Angular Material bump:
 

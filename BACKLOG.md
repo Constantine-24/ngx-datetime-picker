@@ -6,12 +6,6 @@ Deferred work, newest first. Each item says why it was deferred and what "done" 
 
 Dependabot opened these on 2026-10-16 (PRs #1–#3). It closed them automatically when `main` was force-pushed after the history rewrite. None were merged. Dependabot won't re-propose the exact versions it closed, but it will open new PRs for newer releases.
 
-### Angular 22.0 → 22.2 (was PR #1)
-
-- **What:** `@angular/{cdk,common,compiler,core,forms,material,platform-browser,cli,compiler-cli}` 22.0.2/22.0.3 → 22.2.2, and `ng-packagr` 22.0.0 → 22.2.4. Move `@angular/build` and `angular-eslint` in the same change so the toolchain stays in lockstep.
-- **Risk:** the picker depends on two **pinned Material internals** — `MatCalendar (_userSelection)` and `[headerComponent]` (see `projects/ngx-datetime-picker/CLAUDE.md`). A Material minor can change them silently.
-- **Done when:** all gates in `.claude/rules/commands.md` pass, especially the range and dual-calendar integration specs; the demo's Lighthouse accessibility score stays at 100; and the overlay, range selection and dual calendars are checked by hand in the demo. The library's peer range (`^22.0.0`) doesn't change, so no release is needed beyond the next regular one.
-
 ### Dev tooling group (was PR #2)
 
 - **`typescript-eslint` 8.71.0 → 8.71.2:** a patch. Take it with any other change.
