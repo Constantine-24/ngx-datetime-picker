@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { NgxDtTimeAdapter } from 'ngx-datetime-picker';
+import { NgxDtTimeAdapter } from '@constantine-24/ngx-datetime-picker';
 import { Temporal } from 'temporal-polyfill';
 
 /** Internal sentinel returned by `invalid()`; never an instanceof PlainTime. */
@@ -66,10 +66,7 @@ export class TemporalTimeAdapter extends NgxDtTimeAdapter<Temporal.PlainTime> {
     if (meridiem === 'p' && hour < 12) hour += 12;
     if (meridiem === 'a' && hour === 12) hour = 0;
     try {
-      return Temporal.PlainTime.from(
-        { hour, minute, second },
-        { overflow: 'reject' },
-      );
+      return Temporal.PlainTime.from({ hour, minute, second }, { overflow: 'reject' });
     } catch {
       return null;
     }

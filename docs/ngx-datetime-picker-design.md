@@ -9,6 +9,7 @@ The user wants a **configurable Angular date & time picker library** that presen
 The repo is currently a clean **Angular 22** single-app workspace (TypeScript 6, RxJS 7.8, **Vitest**, Prettier; no ESLint). Neither `@angular/cdk` nor `@angular/material` is installed, and there is no date/time code — a green field. Project conventions (`.claude/CLAUDE.md`) require standalone components, signals, `input()`/`output()`, native control flow, **Signal Forms preferred**, host bindings via the `host` object, and **WCAG AA / AXE compliance**.
 
 ### Decisions locked during brainstorming
+
 - **Reuse strategy:** Reuse Material's `MatCalendar` + `DateAdapter` (+ `MatFormFieldControl`); build our own input/overlay/time/datetime/range shell on CDK.
 - **Date model:** Adapter-agnostic (`DateAdapter<D>`); ship a **TC39 Temporal adapter as the flagship default**; native `Date` works out of the box; Luxon/date-fns supported via Material's existing adapters.
 - **Packaging:** Publishable **ng-packagr library** at `projects/ngx-datetime-picker`; current app becomes the **demo/dev harness**.
@@ -17,9 +18,9 @@ The repo is currently a clean **Angular 22** single-app workspace (TypeScript 6,
 - **Range UX:** **Dual calendar + two inputs** by default (configurable to single month).
 - **Time UX:** **Stepper inputs** by default (custom); optional "list" mode can reuse `MatTimepicker`.
 - **Display:** **Overlay popup (default) + inline** mode.
-- **Naming:** prefix **`ngx-dt`**, package **`ngx-datetime-picker`**.
+- **Naming:** prefix **`ngx-dt`**, package **`ngx-datetime-picker`** (published on npm as **`@constantine-24/ngx-datetime-picker`** — the unscoped name was taken).
 - **Timezone model:** **wall-clock / zone-naive v1** (Temporal `PlainDate`/`PlainDateTime`/`PlainTime`), matching Material's zone-naive `DateAdapter`. Instant/zone conversion is the consumer's documented responsibility. The generic `DateAdapter<D>` is the seam: a `ZonedDateTime` adapter can ship later as its own entry point with no breaking change. (Avoids DST gap/overlap complexity in the time stepper.)
-- **Actions & presets:** ship a built-in **action footer** (Apply/Cancel — required for datetime confirm — plus Clear and Today/Now) **and a content-projection seam** (mirrors `<mat-datepicker-actions>`) for custom footers / preset ranges. A built-in preset *list* (`[presets]`) is **deferred to post-v1**.
+- **Actions & presets:** ship a built-in **action footer** (Apply/Cancel — required for datetime confirm — plus Clear and Today/Now) **and a content-projection seam** (mirrors `<mat-datepicker-actions>`) for custom footers / preset ranges. A built-in preset _list_ (`[presets]`) is **deferred to post-v1**.
 
 ## Architecture
 
@@ -58,7 +59,7 @@ The repo is currently a clean **Angular 22** single-app workspace (TypeScript 6,
 - Config tokens: `NGX_DT_DEFAULT_OPTIONS` (defaults), `NGX_DT_FORMATS` (parse/display, layered on `MAT_DATE_FORMATS`).
 - Common inputs surfaced on picker/inputs: `min`, `max`, `dateFilter`, `startView`, `startAt`, `disabled`, `touchUi`, time options (`showSeconds`, `hourCycle` 12/24, `minuteStep`), range options (`monthsToDisplay` 1–2).
 - **Outputs:** `openedChange`/`opened`/`closed`, `valueChange` (parsed `D` / `DateRange<D>`), and calendar passthroughs `monthSelected`/`yearSelected`/`viewChanged` (so consumers can build custom headers or restrict navigation).
-- **Forms integration — three *distinct* contracts on the input/range-input directives** (a deliberate choice, not free):
+- **Forms integration — three _distinct_ contracts on the input/range-input directives** (a deliberate choice, not free):
   - `ControlValueAccessor` — Reactive Forms / `ngModel`.
   - **Signal Forms** — does **not** use CVA; implement the `FormValueControl<D>` interface (`value = model<D>()` plus `errors`/`disabled`/`touched` signals), bound via `[control]`. Separate surface from CVA.
   - `MatFormFieldControl<D>` — `<mat-form-field>` label/hint/error projection. All three coexist (mirrors how Material splits them across `MatInput` + the datepicker input).
@@ -74,7 +75,7 @@ The repo is currently a clean **Angular 22** single-app workspace (TypeScript 6,
 - **Phase 0 — Workspace:** install cdk+material, generate library, wire `angular.json`, add `mat.theme()` to the demo's global styles, scaffold secondary entry points, Vitest config. Establish a **zoneless + SSR** baseline (lib ships no zone.js; no eager `now()`).
 - **Phase 1 — Foundations:** `DateAdapter` wiring + tokens + `NGX_DT_DEFAULT_OPTIONS`; **Temporal adapter** (`Temporal.PlainDate` for date, `PlainDateTime` for datetime, `PlainTime` helpers for time) implementing all abstract `DateAdapter` methods + `provideTemporalAdapter()`. **Parsing is the hard part** — Temporal has no locale/format parser, so define the strategy here (ISO via `Temporal.*.from()` + an `Intl.DateTimeFormat().formatToParts()` reverse-map or a documented input mask); display via `Intl.DateTimeFormat`. CDK overlay service (positioning, focus trap, backdrop/Esc, RTL); base `<ngx-dt-picker>` shell.
 - **Phase 2 — Date picker (`type=date`):** `[ngxDtInput]` (CVA + `MatFormFieldControl` + Signal Forms `FormValueControl`) + single `MatCalendar` + `<ngx-dt-toggle>`; overlay + inline. Register `min`/`max`/`dateFilter`/parse **validators**; define parse-failure value semantics (`null` + error).
-- **Phase 3 — Date range (`type=date-range`):** dual `MatCalendar` (synced months) + `NgxDtRangeSelectionStrategy` (provided via `MAT_DATE_RANGE_SELECTION_STRATEGY`) + `MatRangeDateSelectionModel`; `<ngx-dt-date-range-input>` two-input container; **hover preview via the strategy's `createPreview()`** (drives the calendar's internal preview range). NOTE: `comparisonStart`/`comparisonEnd` are a *separate* read-only comparison-range feature — out of scope v1. Add `end ≥ start` validation.
+- **Phase 3 — Date range (`type=date-range`):** dual `MatCalendar` (synced months) + `NgxDtRangeSelectionStrategy` (provided via `MAT_DATE_RANGE_SELECTION_STRATEGY`) + `MatRangeDateSelectionModel`; `<ngx-dt-date-range-input>` two-input container; **hover preview via the strategy's `createPreview()`** (drives the calendar's internal preview range). NOTE: `comparisonStart`/`comparisonEnd` are a _separate_ read-only comparison-range feature — out of scope v1. Add `end ≥ start` validation.
 - **Phase 4 — Time picker (`type=time`):** custom `NgxDtTimePanel` stepper UI (hours/minutes/optional seconds, 12/24h, minute step, keyboard ↑/↓ + type-to-set, `LiveAnnouncer`); locale-aware `hourCycle` default; time value handling.
 - **Phase 5 — Datetime + datetime-range:** compose calendar + time panel; combined `D` (and `DateRange<D>`) value; **action footer (Apply/Cancel/Clear/Now) + projected-content seam**; time carried across date changes. **min/max must constrain the time panel on boundary dates** (e.g. `min = today 14:00` disables earlier times today); datetime-range same-day `end-time > start-time`.
 - **Phase 6 — Polish:** full AXE/keyboard/focus-trap/screen-reader pass; RTL; `prefers-reduced-motion` for overlay animation; **≥24px target size** (WCAG 2.5.8) on stepper buttons; SSR/zoneless smoke test; expose `--mat-sys-*`-driven theming for custom parts (time stepper, range inputs, toggle); optional `MatTimepicker` list mode; demo page per variant; README (incl. value-prop vs `MatDatepicker`+`MatTimepicker`, timezone/conversion guidance) + API docs.

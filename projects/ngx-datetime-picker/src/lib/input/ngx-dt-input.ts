@@ -17,16 +17,8 @@ import {
   type ValidationErrors,
   type Validator,
 } from '@angular/forms';
-import {
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  type MatDateFormats,
-} from '@angular/material/core';
-import {
-  NgxDtPicker,
-  type NgxDtOrigin,
-  type NgxDtPickerInput,
-} from '../picker/ngx-dt-picker';
+import { DateAdapter, MAT_DATE_FORMATS, type MatDateFormats } from '@angular/material/core';
+import { NgxDtPicker, type NgxDtOrigin, type NgxDtPickerInput } from '../picker/ngx-dt-picker';
 
 /**
  * Text-field directive: parses/formats dates via the `DateAdapter`, owns the

@@ -3,7 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
 import { NgxDtToggle } from './ngx-dt-toggle';
@@ -45,9 +45,7 @@ describe('NgxDtToggle', () => {
   beforeEach(setup);
 
   function button(fixture: { nativeElement: HTMLElement }) {
-    return fixture.nativeElement.querySelector<HTMLButtonElement>(
-      'button.ngx-dt-toggle-button',
-    )!;
+    return fixture.nativeElement.querySelector<HTMLButtonElement>('button.ngx-dt-toggle-button')!;
   }
 
   it('renders a button with aria-haspopup=dialog and collapsed state', () => {
@@ -64,9 +62,7 @@ describe('NgxDtToggle', () => {
     button(fixture).click();
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(
-      document.querySelector('.cdk-overlay-container .ngx-dt-panel'),
-    ).toBeTruthy();
+    expect(document.querySelector('.cdk-overlay-container .ngx-dt-panel')).toBeTruthy();
     expect(button(fixture).getAttribute('aria-expanded')).toBe('true');
   });
 

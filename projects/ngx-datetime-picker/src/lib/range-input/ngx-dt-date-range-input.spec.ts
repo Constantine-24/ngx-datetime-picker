@@ -1,4 +1,4 @@
-import { Component, signal, viewChild } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -6,23 +6,23 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { DateRange } from '@angular/material/datepicker';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxDtPicker } from '../picker/ngx-dt-picker';
-import {
-  NgxDtDateRangeInput,
-  NgxDtEndDate,
-  NgxDtStartDate,
-} from './ngx-dt-date-range-input';
+import { NgxDtDateRangeInput, NgxDtEndDate, NgxDtStartDate } from './ngx-dt-date-range-input';
+
+// Specs click calendar cells by index and assume the calendar opens on June 2026.
+// Pin "today" (Date only, so real timers keep fixture.whenStable() working).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-20T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 @Component({
-  imports: [
-    NgxDtDateRangeInput,
-    NgxDtStartDate,
-    NgxDtEndDate,
-    NgxDtPicker,
-    ReactiveFormsModule,
-  ],
+  imports: [NgxDtDateRangeInput, NgxDtStartDate, NgxDtEndDate, NgxDtPicker, ReactiveFormsModule],
   template: `
     <ngx-dt-date-range-input [rangePicker]="picker" [formControl]="ctrl">
       <input ngxDtStartDate #start="ngxDtStartDate" />
@@ -83,10 +83,7 @@ describe('NgxDtDateRangeInput — text I/O', () => {
     await fixture.whenStable();
 
     fixture.componentInstance.ctrl.setValue(
-      new DateRange(
-        Temporal.PlainDate.from('2026-06-10'),
-        Temporal.PlainDate.from('2026-06-20'),
-      ),
+      new DateRange(Temporal.PlainDate.from('2026-06-10'), Temporal.PlainDate.from('2026-06-20')),
     );
     fixture.detectChanges();
 
@@ -111,9 +108,9 @@ describe('NgxDtDateRangeInput — text I/O', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = fixture.debugElement
-      .query((de) => de.componentInstance instanceof NgxDtDateRangeInput)
-      .componentInstance as NgxDtDateRangeInput<Temporal.PlainDate>;
+    const directive = fixture.debugElement.query(
+      (de) => de.componentInstance instanceof NgxDtDateRangeInput,
+    ).componentInstance as NgxDtDateRangeInput<Temporal.PlainDate>;
     const emissions: DateRange<Temporal.PlainDate>[] = [];
     directive.rangeChange.subscribe((range) => emissions.push(range));
 
@@ -139,9 +136,7 @@ describe('NgxDtDateRangeInput — picker bridge', () => {
     await fixture.whenStable();
 
     const root = fixture.nativeElement as HTMLElement;
-    const cells = Array.from(
-      root.querySelectorAll<HTMLElement>('.mat-calendar-body-cell'),
-    );
+    const cells = Array.from(root.querySelectorAll<HTMLElement>('.mat-calendar-body-cell'));
     cells[4].click(); // start
     fixture.detectChanges();
     await fixture.whenStable();
@@ -168,17 +163,11 @@ describe('NgxDtDateRangeInput — picker bridge', () => {
     container.rangeChange.subscribe((r) => emissions.push(r));
 
     container.setRangeFromPicker(
-      new DateRange(
-        Temporal.PlainDate.from('2026-06-10'),
-        Temporal.PlainDate.from('2026-06-20'),
-      ),
+      new DateRange(Temporal.PlainDate.from('2026-06-10'), Temporal.PlainDate.from('2026-06-20')),
     );
     // Identical values, different instance — must NOT re-emit.
     container.setRangeFromPicker(
-      new DateRange(
-        Temporal.PlainDate.from('2026-06-10'),
-        Temporal.PlainDate.from('2026-06-20'),
-      ),
+      new DateRange(Temporal.PlainDate.from('2026-06-10'), Temporal.PlainDate.from('2026-06-20')),
     );
 
     expect(emissions.length).toBe(1);

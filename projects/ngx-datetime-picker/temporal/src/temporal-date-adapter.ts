@@ -11,13 +11,11 @@ function range<T>(length: number, fn: (i: number) => T): T[] {
 
 @Injectable()
 export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
-  private fieldOrder: Array<'year' | 'month' | 'day'> = ['year', 'month', 'day'];
+  private fieldOrder: ('year' | 'month' | 'day')[] = ['year', 'month', 'day'];
 
   constructor() {
     super();
-    this.setLocale(
-      (inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US',
-    );
+    this.setLocale((inject(MAT_DATE_LOCALE, { optional: true }) as string | null) ?? 'en-US');
   }
 
   override setLocale(locale: string): void {
@@ -25,21 +23,14 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
     this.fieldOrder = this.numericFieldOrder();
   }
 
-  override createDate(
-    year: number,
-    month: number,
-    date: number,
-  ): Temporal.PlainDate {
+  override createDate(year: number, month: number, date: number): Temporal.PlainDate {
     if (month < 0 || month > 11) {
       throw new Error(`Invalid month index "${month}". Expected 0-11.`);
     }
     if (date < 1) {
       throw new Error(`Invalid date "${date}". Date must be greater than 0.`);
     }
-    return Temporal.PlainDate.from(
-      { year, month: month + 1, day: date },
-      { overflow: 'reject' },
-    );
+    return Temporal.PlainDate.from({ year, month: month + 1, day: date }, { overflow: 'reject' });
   }
 
   // --- remaining abstract members are filled in by Tasks 6-10 ---
@@ -140,7 +131,7 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
   }
 
   /** Derives field order (e.g. ['month','day','year'] for en-US) from Intl. */
-  private numericFieldOrder(): Array<'year' | 'month' | 'day'> {
+  private numericFieldOrder(): ('year' | 'month' | 'day')[] {
     const ref = new Date(Date.UTC(2026, 0, 2)); // y=2026, m=01, d=02 — all distinct
     return new Intl.DateTimeFormat(this.locale, {
       year: 'numeric',
@@ -152,10 +143,7 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
       .filter((p) => p.type === 'year' || p.type === 'month' || p.type === 'day')
       .map((p) => p.type as 'year' | 'month' | 'day');
   }
-  override format(
-    date: Temporal.PlainDate,
-    displayFormat: Intl.DateTimeFormatOptions,
-  ): string {
+  override format(date: Temporal.PlainDate, displayFormat: Intl.DateTimeFormatOptions): string {
     if (!this.isValid(date)) {
       throw new Error('TemporalDateAdapter: Cannot format invalid date.');
     }
@@ -177,28 +165,16 @@ export class TemporalDateAdapter extends DateAdapter<Temporal.PlainDate> {
     return super.deserialize(value);
   }
 
-  override compareDate(
-    first: Temporal.PlainDate,
-    second: Temporal.PlainDate,
-  ): number {
+  override compareDate(first: Temporal.PlainDate, second: Temporal.PlainDate): number {
     return Temporal.PlainDate.compare(first, second);
   }
-  override addCalendarYears(
-    date: Temporal.PlainDate,
-    years: number,
-  ): Temporal.PlainDate {
+  override addCalendarYears(date: Temporal.PlainDate, years: number): Temporal.PlainDate {
     return date.add({ years });
   }
-  override addCalendarMonths(
-    date: Temporal.PlainDate,
-    months: number,
-  ): Temporal.PlainDate {
+  override addCalendarMonths(date: Temporal.PlainDate, months: number): Temporal.PlainDate {
     return date.add({ months });
   }
-  override addCalendarDays(
-    date: Temporal.PlainDate,
-    days: number,
-  ): Temporal.PlainDate {
+  override addCalendarDays(date: Temporal.PlainDate, days: number): Temporal.PlainDate {
     return date.add({ days });
   }
   override toIso8601(date: Temporal.PlainDate): string {

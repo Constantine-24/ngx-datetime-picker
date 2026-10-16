@@ -42,3 +42,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Agent working files (internal plans/specs, brainstorming scratch)
+/docs/superpowers/
+/.superpowers/
+
+# Per-developer agent overrides
+CLAUDE.local.md

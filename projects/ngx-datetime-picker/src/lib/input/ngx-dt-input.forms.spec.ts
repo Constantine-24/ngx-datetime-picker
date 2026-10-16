@@ -4,9 +4,9 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { form, FormField } from '@angular/forms/signals';
 import { Temporal } from 'temporal-polyfill';
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { NgxDtInput, NgxDtPicker } from 'ngx-datetime-picker';
+import { NgxDtInput, NgxDtPicker } from '@constantine-24/ngx-datetime-picker';
 
 function setup() {
   TestBed.resetTestingModule();

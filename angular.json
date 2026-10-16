@@ -29,17 +29,15 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ]
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -71,6 +69,12 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+          }
         }
       }
     },
@@ -97,10 +101,17 @@
           "options": {
             "tsConfig": "projects/ngx-datetime-picker/tsconfig.spec.json",
             "buildTarget": "ngx-datetime-picker:build",
-            "include": [
-              "**/*.spec.ts",
-              "../temporal/src/**/*.spec.ts"
-            ]
+            "include": ["**/*.spec.ts", "../temporal/src/**/*.spec.ts"]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-datetime-picker/**/*.ts",
+              "projects/ngx-datetime-picker/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-datetime-picker/eslint.config.js"
           }
         }
       }

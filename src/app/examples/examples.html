@@ -1,0 +1,134 @@
+<div class="grid">
+  <app-example-card
+    heading="Validation built in"
+    description="Parse, min, max and filter errors surface as regular form errors, ready for mat-error."
+    [code]="snippets.validation"
+  >
+    <mat-form-field>
+      <mat-label>Delivery date</mat-label>
+      <input matInput [ngxDtInput]="deliveryPicker" [formControl]="delivery" />
+      <ngx-dt-toggle matSuffix [for]="deliveryPicker" ariaLabel="Open delivery date picker" />
+      <mat-hint>Within the next year</mat-hint>
+      @if (delivery.hasError('ngxDtParse')) {
+        <mat-error>That doesn't look like a date.</mat-error>
+      } @else if (delivery.hasError('ngxDtMin')) {
+        <mat-error>Delivery can't be in the past.</mat-error>
+      } @else if (delivery.hasError('ngxDtMax')) {
+        <mat-error>We only schedule up to a year ahead.</mat-error>
+      } @else if (delivery.hasError('required')) {
+        <mat-error>Pick a delivery date.</mat-error>
+      }
+    </mat-form-field>
+    <ngx-dt-picker #deliveryPicker [min]="today" [max]="inAYear" />
+  </app-example-card>
+
+  <app-example-card
+    heading="Hotel stay"
+    description="A date range across two side-by-side months, bound with Signal Forms."
+    [code]="snippets.stay"
+  >
+    <div class="field">
+      <ngx-dt-date-range-input
+        class="range-field"
+        [rangePicker]="stayPicker"
+        [formField]="booking.stay"
+        ariaLabel="Stay"
+      >
+        <input ngxDtStartDate placeholder="Check-in" aria-label="Check-in" />
+        <span aria-hidden="true">–</span>
+        <input ngxDtEndDate placeholder="Check-out" aria-label="Check-out" />
+      </ngx-dt-date-range-input>
+      <ngx-dt-toggle [for]="stayPicker" ariaLabel="Open stay calendar" />
+    </div>
+    <ngx-dt-picker #stayPicker type="date-range" [monthsToDisplay]="2" [min]="today" />
+    <p class="value">{{ describe(booking.stay().value()) }}</p>
+  </app-example-card>
+
+  <app-example-card
+    heading="Meeting slot"
+    description="Weekdays only, business hours only, in 15-minute steps on a 12-hour clock."
+    [code]="snippets.meeting"
+    [componentCode]="snippets.meetingComponent"
+  >
+    <mat-form-field>
+      <mat-label>Meeting</mat-label>
+      <input matInput [ngxDtDateTimeInput]="meetingPicker" [formControl]="meeting" />
+      <ngx-dt-toggle matSuffix [for]="meetingPicker" ariaLabel="Open meeting picker" />
+    </mat-form-field>
+    <ngx-dt-picker
+      #meetingPicker
+      type="datetime"
+      [hourCycle]="12"
+      [minuteStep]="15"
+      [dateFilter]="weekdaysOnly"
+      [timeFilter]="businessHours"
+    />
+  </app-example-card>
+
+  <app-example-card
+    heading="Night shift"
+    description="A datetime range with start and end time panels on a 24-hour clock."
+    [code]="snippets.shift"
+  >
+    <div class="field">
+      <ngx-dt-datetime-range-input
+        class="range-field range-field-wide"
+        [rangePicker]="shiftPicker"
+        [formControl]="shift"
+        ariaLabel="Shift"
+      >
+        <input ngxDtStartDateTime placeholder="Start" aria-label="Shift start" />
+        <span aria-hidden="true">–</span>
+        <input ngxDtEndDateTime placeholder="End" aria-label="Shift end" />
+      </ngx-dt-datetime-range-input>
+      <ngx-dt-toggle [for]="shiftPicker" ariaLabel="Open shift picker" />
+    </div>
+    <ngx-dt-picker #shiftPicker type="datetime-range" [hourCycle]="24" [minuteStep]="30" />
+    <p class="value">{{ describe(shift.value) }}</p>
+  </app-example-card>
+
+  <app-example-card
+    heading="Apply or cancel"
+    description="Draft mode buffers changes until Apply; Cancel, Escape or a click outside discards them."
+    [code]="snippets.draft"
+  >
+    <mat-form-field>
+      <mat-label>Report date</mat-label>
+      <input matInput [ngxDtInput]="reportPicker" [formControl]="report" />
+      <ngx-dt-toggle matSuffix [for]="reportPicker" ariaLabel="Open report date picker" />
+    </mat-form-field>
+    <ngx-dt-picker #reportPicker [draftMode]="true" />
+  </app-example-card>
+
+  <app-example-card
+    heading="Every forms API"
+    description="One directive works with Reactive Forms, ngModel and Signal Forms alike."
+    [code]="snippets.forms"
+  >
+    <div class="forms">
+      <mat-form-field>
+        <mat-label>Reactive Forms</mat-label>
+        <input matInput [ngxDtInput]="reactivePicker" [formControl]="reactiveDate" />
+        <ngx-dt-toggle matSuffix [for]="reactivePicker" ariaLabel="Open Reactive Forms picker" />
+        <mat-hint>{{ describe(reactiveDate.value) }}</mat-hint>
+      </mat-form-field>
+      <ngx-dt-picker #reactivePicker />
+
+      <mat-form-field>
+        <mat-label>ngModel</mat-label>
+        <input matInput [ngxDtInput]="modelPicker" [(ngModel)]="templateDate" />
+        <ngx-dt-toggle matSuffix [for]="modelPicker" ariaLabel="Open ngModel picker" />
+        <mat-hint>{{ describe(templateDate) }}</mat-hint>
+      </mat-form-field>
+      <ngx-dt-picker #modelPicker />
+
+      <mat-form-field>
+        <mat-label>Signal Forms</mat-label>
+        <input matInput [ngxDtInput]="signalPicker" [formField]="signalDate.date" />
+        <ngx-dt-toggle matSuffix [for]="signalPicker" ariaLabel="Open Signal Forms picker" />
+        <mat-hint>{{ describe(signalDate.date().value()) }}</mat-hint>
+      </mat-form-field>
+      <ngx-dt-picker #signalPicker />
+    </div>
+  </app-example-card>
+</div>

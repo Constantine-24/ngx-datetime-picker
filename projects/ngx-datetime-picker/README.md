@@ -1,38 +1,48 @@
 # ngx-datetime-picker
 
-A configurable Angular date & time picker library built on `@angular/cdk` and `@angular/material` primitives. Adapter-agnostic with a TC39 **Temporal** adapter as the flagship default. Ships five variants: date, date-range, time, datetime, and datetime-range.
+[![npm](https://img.shields.io/npm/v/@constantine-24/ngx-datetime-picker?color=0b57d0)](https://www.npmjs.com/package/@constantine-24/ngx-datetime-picker)
+[![CI](https://github.com/Constantine-24/ngx-datetime-picker/actions/workflows/ci.yml/badge.svg)](https://github.com/Constantine-24/ngx-datetime-picker/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@constantine-24/ngx-datetime-picker)](https://github.com/Constantine-24/ngx-datetime-picker/blob/main/LICENSE)
+
+Date, date range, time, datetime and datetime range pickers for **Angular 22**, built on `@angular/cdk` and `@angular/material` primitives. Adapter-agnostic core with a TC39 **Temporal** adapter as the flagship default. Accessible (WCAG 2.2 AA), RTL-ready, and compatible with Reactive Forms, `ngModel` and Signal Forms.
+
+**[Live demo & playground →](https://constantine-24.github.io/ngx-datetime-picker/)**
+
+![ngx-datetime-picker demo](https://raw.githubusercontent.com/Constantine-24/ngx-datetime-picker/main/docs/images/demo.png)
 
 ---
 
 ## Entry points
 
-| Import | Contents |
-| --- | --- |
-| `ngx-datetime-picker` | Components (`NgxDtPicker`, `NgxDtToggle`, `NgxDtInput`, `NgxDtDateRangeInput`, `NgxDtStartDate`, `NgxDtEndDate`, `NgxDtTimePanel`, `NgxDtTimeInput`, `NgxDtDateTimeInput`, `NgxDtDateTimeRangeInput`, `NgxDtStartDateTime`, `NgxDtEndDateTime`), abstract adapters (`NgxDtTimeAdapter`, `NgxDtDateTimeAdapter`), token `NGX_DT_DEFAULT_OPTIONS` + `NgxDtDefaultOptions` type, types (`NgxDtPickerType`, `NgxDtOrigin`, `NgxDtPickerInput`, `NgxDtPickerRangeInput`), and a re-export of `DateRange` from `@angular/material/datepicker`. |
-| `ngx-datetime-picker/temporal` | `provideTemporalDateAdapter()`, `provideTemporalTimeAdapter()`, `provideTemporalDateTimeAdapter()`, the concrete adapter classes, and `NGX_DT_TEMPORAL_DATE_FORMATS`. |
+| Import                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@constantine-24/ngx-datetime-picker`          | Components (`NgxDtPicker`, `NgxDtToggle`, `NgxDtInput`, `NgxDtDateRangeInput`, `NgxDtStartDate`, `NgxDtEndDate`, `NgxDtTimePanel`, `NgxDtTimeInput`, `NgxDtDateTimeInput`, `NgxDtDateTimeRangeInput`, `NgxDtStartDateTime`, `NgxDtEndDateTime`), abstract adapters (`NgxDtTimeAdapter`, `NgxDtDateTimeAdapter`), token `NGX_DT_DEFAULT_OPTIONS` + `NgxDtDefaultOptions` type, types (`NgxDtPickerType`, `NgxDtOrigin`, `NgxDtPickerInput`, `NgxDtPickerRangeInput`), and a re-export of `DateRange` from `@angular/material/datepicker`. |
+| `@constantine-24/ngx-datetime-picker/temporal` | `provideTemporalDateAdapter()`, `provideTemporalTimeAdapter()`, `provideTemporalDateTimeAdapter()`, the concrete adapter classes, and `NGX_DT_TEMPORAL_DATE_FORMATS`.                                                                                                                                                                                                                                                                                                                                                                    |
 
-The Temporal adapter lives in a secondary entry point so the `temporal-polyfill` runtime tree-shakes away for consumers who do not use it.
+The Temporal adapter lives in a secondary entry point, so apps that bring their own adapter never pull in `temporal-polyfill`.
 
 ---
 
 ## Installation
 
 ```bash
-npm install ngx-datetime-picker @angular/material @angular/cdk temporal-polyfill
+npm install @constantine-24/ngx-datetime-picker @angular/material @angular/cdk temporal-polyfill
 ```
 
-`temporal-polyfill` is an **optional** peer dependency — only required where native `Temporal` is unavailable (e.g. Safari prior to mid-2026).
+`temporal-polyfill` is required by the `/temporal` entry point — the Temporal adapters import it. It is marked as an optional peer dependency only so that apps using the core with their own adapter don't have to install it.
+
+The host app also needs an Angular Material M3 theme (`mat.theme()`, see [Theming](#theming)); `ng add @angular/material` sets one up.
 
 ---
 
 ## Providers
 
-Choose the provider that matches your variant. Import from `ngx-datetime-picker/temporal`.
+Choose the provider that matches your variant. Import from `@constantine-24/ngx-datetime-picker/temporal`.
 
-| Variant(s) | Provider |
-| --- | --- |
-| `date`, `date-range` | `provideTemporalDateAdapter()` |
-| `time` | `provideTemporalTimeAdapter()` |
+| Variant(s)                   | Provider                           |
+| ---------------------------- | ---------------------------------- |
+| `date`, `date-range`         | `provideTemporalDateAdapter()`     |
+| `time`                       | `provideTemporalTimeAdapter()`     |
 | `datetime`, `datetime-range` | `provideTemporalDateTimeAdapter()` |
 
 `provideTemporalDateTimeAdapter()` is a **superset** that composes the date adapter, the time adapter, and the bridge between them. Use it for both datetime variants.
@@ -41,7 +51,7 @@ Each provider accepts an optional `MatDateFormats` override; the defaults are `N
 
 ```ts
 // app.config.ts
-import { provideTemporalDateAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -60,7 +70,7 @@ All examples use `provideTemporalDateAdapter()` (or the appropriate variant prov
 ### Date — inline
 
 ```ts
-import { NgxDtPicker } from 'ngx-datetime-picker';
+import { NgxDtPicker } from '@constantine-24/ngx-datetime-picker';
 ```
 
 ```html
@@ -81,7 +91,11 @@ import { NgxDtPicker } from 'ngx-datetime-picker';
 ### Date range
 
 ```html
-<ngx-dt-date-range-input [rangePicker]="rangePicker" [formControl]="rangeCtrl" ariaLabel="Trip dates">
+<ngx-dt-date-range-input
+  [rangePicker]="rangePicker"
+  [formControl]="rangeCtrl"
+  ariaLabel="Trip dates"
+>
   <input ngxDtStartDate placeholder="Start" aria-label="Start date" />
   <span aria-hidden="true">–</span>
   <input ngxDtEndDate placeholder="End" aria-label="End date" />
@@ -90,13 +104,13 @@ import { NgxDtPicker } from 'ngx-datetime-picker';
 <ngx-dt-picker #rangePicker type="date-range" />
 ```
 
-Provide `provideTemporalDateAdapter()` for this variant. The `rangeCtrl` value type is `DateRange<Temporal.PlainDate>` (re-exported as `DateRange` from `ngx-datetime-picker`).
+Provide `provideTemporalDateAdapter()` for this variant. The `rangeCtrl` value type is `DateRange<Temporal.PlainDate>` (re-exported as `DateRange` from `@constantine-24/ngx-datetime-picker`).
 
 ### Time — popup with toggle
 
 ```ts
 // app.config.ts — use provideTemporalTimeAdapter() for this variant
-import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 ```
 
 ```html
@@ -112,7 +126,7 @@ import { provideTemporalTimeAdapter } from 'ngx-datetime-picker/temporal';
 
 ```ts
 // app.config.ts — use provideTemporalDateTimeAdapter() for this variant
-import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
+import { provideTemporalDateTimeAdapter } from '@constantine-24/ngx-datetime-picker/temporal';
 ```
 
 ```html
@@ -146,48 +160,48 @@ import { provideTemporalDateTimeAdapter } from 'ngx-datetime-picker/temporal';
 
 `<ngx-dt-picker>` (exportAs: `ngxDtPicker`)
 
-| Input | Type | Default | Description |
-| --- | --- | --- | --- |
-| `type` | `'date' \| 'date-range' \| 'time' \| 'datetime' \| 'datetime-range'` | `'date'` | Picker variant. |
-| `inline` | `boolean` | `false` | Render as an always-visible panel instead of an overlay. |
-| `min` | `D \| null` | `null` | Minimum selectable value. |
-| `max` | `D \| null` | `null` | Maximum selectable value. |
-| `startAt` | `D \| null` | `null` | Calendar opens at this date/month when no value is set. |
-| `startView` | `'month' \| 'year' \| 'multi-year'` | `'month'` | Initial calendar view (single-calendar mode only). |
-| `dateFilter` | `(date: D) => boolean` | `() => true` | Predicate to disable individual dates. For datetime variants the predicate receives the date part. |
-| `timeFilter` | `(time: D) => boolean` | `() => true` | Predicate to disable individual time steps in the time panel. |
-| `disabled` | `boolean` | `false` | Disable the picker. |
-| `hourCycle` | `12 \| 24 \| null` | `null` | Force 12- or 24-hour time display; `null` uses the locale default. |
-| `minuteStep` | `number` | `1` | Minute increment for the time panel stepper. |
-| `showSeconds` | `boolean` | `false` | Show the seconds field in the time panel. |
-| `monthsToDisplay` | `1 \| 2` | `1` | Show two side-by-side calendars in range modes. Ignored for non-range variants. |
-| `draftMode` | `boolean` | `false` | Buffer changes until the user clicks Apply; Cancel discards them. |
-| `hasBackdrop` | `boolean` | (from options) | Whether the overlay has a transparent backdrop. |
-| `restoreFocus` | `boolean` | (from options) | Return focus to the trigger element when the overlay closes. |
-| `ariaLabel` | `string` | `'Choose a date'` | `aria-label` for the picker panel. |
+| Input             | Type                                                                 | Default           | Description                                                                                        |
+| ----------------- | -------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| `type`            | `'date' \| 'date-range' \| 'time' \| 'datetime' \| 'datetime-range'` | `'date'`          | Picker variant.                                                                                    |
+| `inline`          | `boolean`                                                            | `false`           | Render as an always-visible panel instead of an overlay.                                           |
+| `min`             | `D \| null`                                                          | `null`            | Minimum selectable value.                                                                          |
+| `max`             | `D \| null`                                                          | `null`            | Maximum selectable value.                                                                          |
+| `startAt`         | `D \| null`                                                          | `null`            | Calendar opens at this date/month when no value is set.                                            |
+| `startView`       | `'month' \| 'year' \| 'multi-year'`                                  | `'month'`         | Initial calendar view (single-calendar mode only).                                                 |
+| `dateFilter`      | `(date: D) => boolean`                                               | `() => true`      | Predicate to disable individual dates. For datetime variants the predicate receives the date part. |
+| `timeFilter`      | `(time: D) => boolean`                                               | `() => true`      | Predicate to disable individual time steps in the time panel.                                      |
+| `disabled`        | `boolean`                                                            | `false`           | Disable the picker.                                                                                |
+| `hourCycle`       | `12 \| 24 \| null`                                                   | `null`            | Force 12- or 24-hour time display; `null` uses the locale default.                                 |
+| `minuteStep`      | `number`                                                             | `1`               | Minute increment for the time panel stepper.                                                       |
+| `showSeconds`     | `boolean`                                                            | `false`           | Show the seconds field in the time panel.                                                          |
+| `monthsToDisplay` | `1 \| 2`                                                             | `1`               | Show two side-by-side calendars in range modes. Ignored for non-range variants.                    |
+| `draftMode`       | `boolean`                                                            | `false`           | Buffer changes until the user clicks Apply; Cancel discards them.                                  |
+| `hasBackdrop`     | `boolean`                                                            | (from options)    | Whether the overlay has a transparent backdrop.                                                    |
+| `restoreFocus`    | `boolean`                                                            | (from options)    | Return focus to the trigger element when the overlay closes.                                       |
+| `ariaLabel`       | `string`                                                             | `'Choose a date'` | `aria-label` for the picker panel.                                                                 |
 
 **Two-way models:**
 
-| Model | Type | Description |
-| --- | --- | --- |
-| `value` | `D \| null` | Selected date/time for single-value variants. |
-| `range` | `DateRange<D> \| null` | Selected range for range variants. |
+| Model   | Type                   | Description                                   |
+| ------- | ---------------------- | --------------------------------------------- |
+| `value` | `D \| null`            | Selected date/time for single-value variants. |
+| `range` | `DateRange<D> \| null` | Selected range for range variants.            |
 
 **Outputs:**
 
-| Output | Payload | Description |
-| --- | --- | --- |
+| Output         | Payload   | Description                             |
+| -------------- | --------- | --------------------------------------- |
 | `openedChange` | `boolean` | Emits `true` on open, `false` on close. |
-| `opened` | `void` | Emits when the overlay opens. |
-| `closed` | `void` | Emits when the overlay closes. |
+| `opened`       | `void`    | Emits when the overlay opens.           |
+| `closed`       | `void`    | Emits when the overlay closes.          |
 
 **Toggle inputs** (`<ngx-dt-toggle>`):
 
-| Input | Type | Description |
-| --- | --- | --- |
-| `for` | `NgxDtPicker` | The picker this toggle controls (required). |
-| `disabled` | `boolean` | Disable the toggle button. |
-| `ariaLabel` | `string` | `aria-label` for the toggle button. |
+| Input       | Type          | Description                                 |
+| ----------- | ------------- | ------------------------------------------- |
+| `for`       | `NgxDtPicker` | The picker this toggle controls (required). |
+| `disabled`  | `boolean`     | Disable the toggle button.                  |
+| `ariaLabel` | `string`      | `aria-label` for the toggle button.         |
 
 ---
 
@@ -197,40 +211,40 @@ All input directives act as CVAs and validators, compatible with Reactive Forms,
 
 ### Single-value inputs
 
-| Selector | Usage |
-| --- | --- |
-| `input[ngxDtInput]` | Date picker (`[ngxDtInput]="pickerRef"`) |
-| `input[ngxDtTimeInput]` | Time picker (`[ngxDtTimeInput]="pickerRef"`) |
+| Selector                    | Usage                                                |
+| --------------------------- | ---------------------------------------------------- |
+| `input[ngxDtInput]`         | Date picker (`[ngxDtInput]="pickerRef"`)             |
+| `input[ngxDtTimeInput]`     | Time picker (`[ngxDtTimeInput]="pickerRef"`)         |
 | `input[ngxDtDateTimeInput]` | Datetime picker (`[ngxDtDateTimeInput]="pickerRef"`) |
 
 ### Range inputs
 
-| Selector | Usage |
-| --- | --- |
-| `<ngx-dt-date-range-input [rangePicker]>` | Wrapper for date range; contains `input[ngxDtStartDate]` and `input[ngxDtEndDate]` |
+| Selector                                      | Usage                                                                                          |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `<ngx-dt-date-range-input [rangePicker]>`     | Wrapper for date range; contains `input[ngxDtStartDate]` and `input[ngxDtEndDate]`             |
 | `<ngx-dt-datetime-range-input [rangePicker]>` | Wrapper for datetime range; contains `input[ngxDtStartDateTime]` and `input[ngxDtEndDateTime]` |
 
 ### Validation error keys
 
 **Single inputs:**
 
-| Key | Condition |
-| --- | --- |
-| `ngxDtParse` | The text could not be parsed as a valid value. |
-| `ngxDtMin` | Value is before `min`. |
-| `ngxDtMax` | Value is after `max`. |
+| Key           | Condition                                         |
+| ------------- | ------------------------------------------------- |
+| `ngxDtParse`  | The text could not be parsed as a valid value.    |
+| `ngxDtMin`    | Value is before `min`.                            |
+| `ngxDtMax`    | Value is after `max`.                             |
 | `ngxDtFilter` | Value is excluded by `dateFilter` / `timeFilter`. |
 
 **Range inputs (set on the wrapper control):**
 
-| Key | Condition |
-| --- | --- |
-| `ngxDtRangeStart` | Start value is invalid. |
-| `ngxDtRangeEnd` | End value is invalid. |
-| `ngxDtMin` | A range end is before `min`. |
-| `ngxDtMax` | A range end is after `max`. |
-| `ngxDtFilter` | A range end is excluded by the filter. |
-| `ngxDtRangeOrder` | Start is after end. |
+| Key               | Condition                              |
+| ----------------- | -------------------------------------- |
+| `ngxDtRangeStart` | Start value is invalid.                |
+| `ngxDtRangeEnd`   | End value is invalid.                  |
+| `ngxDtMin`        | A range end is before `min`.           |
+| `ngxDtMax`        | A range end is after `max`.            |
+| `ngxDtFilter`     | A range end is excluded by the filter. |
+| `ngxDtRangeOrder` | Start is after end.                    |
 
 ---
 
@@ -243,14 +257,16 @@ Components consume `--mat-sys-*` design tokens from the Material token system. T
 @use '@angular/material' as mat;
 
 html {
-  @include mat.theme((
-    color: (
-      primary: mat.$azure-palette,
-      theme-type: light,
-    ),
-    typography: mat.$brand-typography,
-    density: 0,
-  ));
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        theme-type: light,
+      ),
+      typography: mat.$brand-typography,
+      density: 0,
+    )
+  );
 }
 ```
 
@@ -274,11 +290,8 @@ Right-to-left layout is supported via CDK `Directionality`. Set `dir="rtl"` on t
 
 ---
 
-## Building & testing
+## Contributing & license
 
-This is an Angular CLI workspace using the Vitest unit-test builder.
+Issues and pull requests are welcome — see [CONTRIBUTING.md](https://github.com/Constantine-24/ngx-datetime-picker/blob/main/CONTRIBUTING.md). Release history: [CHANGELOG.md](https://github.com/Constantine-24/ngx-datetime-picker/blob/main/projects/ngx-datetime-picker/CHANGELOG.md).
 
-```bash
-ng build ngx-datetime-picker          # ng-packagr build (both entry points)
-ng test ngx-datetime-picker --no-watch # Vitest (single run)
-```
+[MIT](https://github.com/Constantine-24/ngx-datetime-picker/blob/main/LICENSE) © Konstantin Penzin

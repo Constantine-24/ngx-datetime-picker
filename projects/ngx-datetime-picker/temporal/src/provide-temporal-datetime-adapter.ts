@@ -1,5 +1,5 @@
 import { Provider } from '@angular/core';
-import { NgxDtDateTimeAdapter } from 'ngx-datetime-picker';
+import { NgxDtDateTimeAdapter } from '@constantine-24/ngx-datetime-picker';
 import { provideTemporalDateAdapter } from './provide-temporal-date-adapter';
 import { provideTemporalTimeAdapter } from './provide-temporal-time-adapter';
 import { TemporalDateTimeAdapter } from './temporal-datetime-adapter';
