@@ -1,6 +1,6 @@
 {
   "name": "@constantine-24/ngx-datetime-picker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Configurable Angular date, time, datetime and range picker built on Angular CDK and Material, with a first-class TC39 Temporal adapter.",
   "keywords": [
     "angular",
