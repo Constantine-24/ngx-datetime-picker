@@ -14,7 +14,7 @@ Angular CLI workspace with two projects (see `angular.json`):
 | `@constantine-24/ngx-datetime-picker`          | `projects/ngx-datetime-picker/src/public-api.ts`          | Adapter-agnostic core: picker, toggle, inputs, time panel, abstract adapters, tokens, types.            |
 | `@constantine-24/ngx-datetime-picker/temporal` | `projects/ngx-datetime-picker/temporal/src/public-api.ts` | Temporal adapters + `provideTemporal*Adapter()` providers. Only this entry imports `temporal-polyfill`. |
 
-- `tsconfig.json` `paths` map both specifiers to **source**, so the demo and specs compile against live code (no `dist` round-trip). ng-packagr ignores these paths.
+- `tsconfig.json` `paths` map both specifiers to **source**, so the demo and specs compile against live code (no `dist` round-trip). When ng-packagr builds, it resolves the secondary entry's import of the core to the core entry it built first.
 - The core entry must never import from `temporal/` or `temporal-polyfill` — that is what keeps the polyfill tree-shakeable for consumers using another adapter. The secondary entry imports the core by its package specifier, never by a relative path.
 
 ## Library layout (`projects/ngx-datetime-picker/src/lib/`)
